@@ -1,0 +1,382 @@
+/* ===================================================
+   REGISTER PAGE - PREMIUM UI
+=================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+a {
+  text-decoration: none;
+}
+
+button,
+input,
+select {
+  font-family: inherit;
+}
+
+/* ===================================================
+   PAGE LAYOUT
+=================================================== */
+.register-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.08fr 1fr;
+}
+
+/* ===================================================
+   LEFT SECTION
+=================================================== */
+.register-left {
+  position: relative;
+  background: linear-gradient(135deg, #0f172a, #1e293b, #2563eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  overflow: hidden;
+}
+
+.register-left::before,
+.register-left::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+}
+
+.register-left::before {
+  width: 430px;
+  height: 430px;
+  top: -120px;
+  left: -120px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.register-left::after {
+  width: 330px;
+  height: 330px;
+  right: -80px;
+  bottom: -80px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.register-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.2);
+}
+
+.register-left-content {
+  position: relative;
+  z-index: 2;
+  max-width: 540px;
+  color: white;
+}
+
+.register-tag {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.register-left-content h1 {
+  font-size: 54px;
+  line-height: 1.08;
+  font-weight: 800;
+  margin-bottom: 18px;
+}
+
+.register-left-content h1 span {
+  color: #bfdbfe;
+}
+
+.register-left-content p {
+  font-size: 17px;
+  line-height: 1.8;
+  opacity: 0.95;
+  margin-bottom: 30px;
+}
+
+.benefit-list {
+  display: grid;
+  gap: 18px;
+}
+
+.benefit-card {
+  padding: 20px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.benefit-card h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.benefit-card p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ===================================================
+   RIGHT SECTION
+=================================================== */
+.register-right {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 42px 24px;
+}
+
+.register-form {
+  width: 100%;
+  max-width: 440px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  padding: 38px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
+}
+
+.register-form h2 {
+  font-size: 34px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.register-form > p {
+  color: #64748b;
+  font-size: 15px;
+  margin-bottom: 24px;
+}
+
+/* ===================================================
+   ERROR
+=================================================== */
+.register-error {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+/* ===================================================
+   FORM GROUP
+=================================================== */
+.register-group {
+  margin-bottom: 18px;
+}
+
+.register-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.register-group input,
+.register-group select {
+  width: 100%;
+  height: 52px;
+  border-radius: 14px;
+  border: 1px solid #cbd5e1;
+  padding: 0 16px;
+  font-size: 15px;
+  outline: none;
+  background: white;
+  transition: 0.25s;
+}
+
+.register-group input:focus,
+.register-group select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+}
+
+/* ===================================================
+   MAIN BUTTON
+=================================================== */
+.register-form button[type="submit"] {
+  width: 100%;
+  height: 54px;
+  border: none;
+  border-radius: 14px;
+  background: #2563eb;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.register-form button[type="submit"]:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+}
+
+.register-form button:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+/* ===================================================
+   DIVIDER
+=================================================== */
+.register-divider {
+  margin: 20px 0;
+  text-align: center;
+  position: relative;
+}
+
+.register-divider span {
+  position: relative;
+  z-index: 2;
+  background: white;
+  padding: 0 12px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.register-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+/* ===================================================
+   GOOGLE BUTTON
+=================================================== */
+.register-google-btn {
+  width: 100%;
+  height: 52px;
+  border-radius: 14px;
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.register-google-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+  transform: translateY(-2px);
+}
+
+.auth-note {
+  margin-top: 20px;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ===================================================
+   FOOTER TEXT
+=================================================== */
+.register-bottom {
+  text-align: center;
+  margin-top: 22px;
+  color: #64748b;
+  font-size: 15px;
+}
+
+.register-bottom a {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+/* ===================================================
+   RESPONSIVE
+=================================================== */
+@media (max-width: 1100px) {
+  .register-page {
+    grid-template-columns: 1fr;
+  }
+
+  .register-left {
+    min-height: 430px;
+  }
+
+  .register-left-content {
+    text-align: center;
+  }
+
+  .register-left-content h1 {
+    font-size: 44px;
+  }
+}
+
+@media (max-width: 700px) {
+  .register-left {
+    padding: 34px 22px;
+  }
+
+  .register-left-content h1 {
+    font-size: 34px;
+  }
+
+  .register-left-content p {
+    font-size: 15px;
+  }
+
+  .register-right {
+    padding: 22px 14px 34px;
+  }
+
+  .register-form {
+    padding: 28px 22px;
+    border-radius: 18px;
+  }
+
+  .register-form h2 {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .register-left {
+    display: none;
+  }
+
+  .register-page {
+    grid-template-columns: 1fr;
+  }
+
+  .register-right {
+    min-height: 100vh;
+  }
+
+  .register-form {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    padding: 14px 6px;
+  }
+}
