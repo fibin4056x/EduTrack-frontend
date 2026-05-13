@@ -1,26 +1,58 @@
-import { use, useEffect,useState } from "react";
-import { getTeachers } from "../api/teacher.api";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  getTeachers,
+} from "../api/teacher.api";
+
+
 
 const useTeachers = () => {
-    const [teacher,setTeacher] = useState([]);
-    const [loading,setLoading] = useState(false);
+  const [teachers, setTeachers] =
+    useState([]);
 
-    const fetchTeachers = async () => {
-        try {
-            setLoading(true);
-            const response = await getTeachers();
-            setTeacher(response.data)
-        } catch (error) {
-            console.error("Error fetching teachers:", error);
-        } finally {
-            setLoading(false);      
-        }
+  const [loading, setLoading] =
+    useState(false);
+
+
+
+  const fetchTeachers =
+    async () => {
+      try {
+        setLoading(true);
+
+        const response =
+          await getTeachers();
+
+        setTeachers(
+          response.data || []
+        );
+      } catch (error) {
+        console.error(
+          "Error fetching teachers:",
+          error
+        );
+      } finally {
+        setLoading(false);
+      }
     };
-    useEffect(() => {
-        fetchTeachers();
-    },[]);
 
-    return {teacher,loading,fetchTeachers};
+
+
+  useEffect(() => {
+    fetchTeachers();
+  }, []);
+
+
+
+
+  return {
+    teachers,
+    loading,
+    fetchTeachers,
+  };
 };
 
 export default useTeachers;

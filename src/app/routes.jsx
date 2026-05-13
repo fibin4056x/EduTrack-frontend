@@ -1,18 +1,19 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
-import AuthLayout from "../layouts/AuthLayout";
-import DashboardLayout from "../layouts/DashboardLayout";
+import AuthLayout from "../layouts/AuthLayout.jsx";
+import DashboardLayout from "../layouts/DashboardLayout.jsx";
 
-import LoginPage from "../features/auth/pages/LoginPage";
+import LoginPage from "../features/auth/pages/LoginPage.jsx";
 
-import PrincipalDashboard from "../features/principal/dashboard/pages/DashboardPage";
+import PrincipalDashboard from "../features/principal/dashboard/pages/DashboardPage.jsx";
 
-import TeacherDashboard from "../features/teacher/dashboard/pages/DashboardPage";
+import TeacherDashboard from "../features/teacher/dashboard/pages/DashboardPage.jsx";
 
-import TeachersPage from "../features/principal/teachers/pages/TeachersPage";
+import TeachersPage from "../features/principal/teachers/pages/TeachersPage.jsx";
 
-import ProtectedRoute from "./ProtectedRoute";
+import ProtectedRoute from "./ProtectedRoute.jsx";
 
+import ClassesPage from "../features/principal/classes/pages/ClassesPage.jsx";
 
 
 function AppRoutes() {
@@ -74,6 +75,10 @@ function AppRoutes() {
 
       </Route>
 
+      <Route
+      path="/principal/classes"
+     element={<ClassesPage />}
+     />
 
 
       {/* =========================
@@ -86,6 +91,7 @@ function AppRoutes() {
 
     </Routes>
   );
+   
 }
 
 export default AppRoutes;

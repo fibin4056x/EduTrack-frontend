@@ -1,18 +1,17 @@
 import useTeachers
   from "../hooks/useTeachers";
 
-import TeacherTable
-  from "../components/TeacherTable";
-
 import AddTeacherModal
   from "../components/AddTeacherModal";
 
+import TeacherTable
+  from "../components/TeacherTable";
 
 
-const TeachersPage = () => {
+
+function TeachersPage() {
   const {
     teachers,
-    loading,
     fetchTeachers,
   } = useTeachers();
 
@@ -20,7 +19,10 @@ const TeachersPage = () => {
 
   return (
     <div>
-      <h1>Teachers</h1>
+
+      <h1 className="text-2xl font-semibold mb-6">
+        Teachers
+      </h1>
 
       <AddTeacherModal
         refreshTeachers={
@@ -30,13 +32,13 @@ const TeachersPage = () => {
 
       <TeacherTable
         teachers={teachers}
-        loading={loading}
         refreshTeachers={
           fetchTeachers
         }
       />
+
     </div>
   );
-};
+}
 
 export default TeachersPage;
