@@ -13,4 +13,8 @@ build/
 .idea/
 
 .DS_Store
+<<<<<<< HEAD
 Thumbs.db
+=======
+Thumbs.db
+>>>>>>> dcf6eb304d95419da5431620e2bea12663d8c73e
