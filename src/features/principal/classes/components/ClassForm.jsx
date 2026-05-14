@@ -1,4 +1,7 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import {
   createClassApi,
@@ -7,8 +10,8 @@ import {
 
 const initialState = {
   name: "",
-  section: "",
   academicYear: "",
+  status: "active",
 };
 
 const ClassForm = ({
@@ -25,25 +28,29 @@ const ClassForm = ({
   useEffect(() => {
     if (editingClass) {
       setFormData({
-        name: editingClass.name,
-        section: editingClass.section,
+        name: editingClass.name || "",
         academicYear:
-          editingClass.academicYear,
+          editingClass.academicYear ||
+          "",
+        status:
+          editingClass.status ||
+          "active",
       });
     } else {
       setFormData(initialState);
     }
   }, [editingClass]);
 
-  const handleChange = (e) => {
+  const handleChange = (event) => {
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [event.target.name]:
+        event.target.value,
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
     try {
       setLoading(true);
@@ -58,15 +65,14 @@ const ClassForm = ({
       }
 
       setFormData(initialState);
-
       fetchClasses();
-
       clearEdit();
     } catch (error) {
       console.error(error);
 
       alert(
-        error?.response?.data?.message ||
+        error?.response?.data
+          ?.message ||
           "Something went wrong"
       );
     } finally {
@@ -77,62 +83,135 @@ const ClassForm = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-lg bg-white p-6 shadow"
+      className="school-card space-y-6 p-6 sm:p-7"
     >
-      <h2 className="text-xl font-bold">
-        {editingClass
-          ? "Edit Class"
-          : "Create Class"}
-      </h2>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span className="school-pill">
+            Class Register
+          </span>
 
-      <input
-        type="text"
-        name="name"
-        placeholder="Class Name"
-        value={formData.name}
-        onChange={handleChange}
-        className="w-full rounded border p-3"
-        required
-      />
+          <h2 className="mt-4 text-2xl font-bold text-slate-900">
+            {editingClass
+              ? "Edit class details"
+              : "Create a class for the school year"}
+          </h2>
 
-      <input
-        type="text"
-        name="section"
-        placeholder="Division"
-        value={formData.section}
-        onChange={handleChange}
-        className="w-full rounded border p-3"
-        required
-      />
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            Keep the class name, academic year, and availability status ready for real school operations.
+          </p>
+        </div>
 
-      <input
-        type="text"
-        name="academicYear"
-        placeholder="Academic Year"
-        value={formData.academicYear}
-        onChange={handleChange}
-        className="w-full rounded border p-3"
-        required
-      />
+        <div className="rounded-[24px] border border-slate-200 bg-slate-50 px-5 py-4">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+            Editing Mode
+          </p>
 
-      <div className="flex gap-3">
+          <p className="mt-2 text-sm font-semibold text-slate-800">
+            {editingClass
+              ? "Updating existing class"
+              : "Creating new class"}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-[1.2fr,1fr,0.8fr]">
+        <div>
+          <label
+            htmlFor="name"
+            className="school-label"
+          >
+            Class Name
+          </label>
+
+          <input
+            id="name"
+            type="text"
+            name="name"
+            placeholder="Example: Grade 1, UKG, LKG"
+            value={formData.name}
+            onChange={handleChange}
+            className="school-input"
+            required
+          />
+
+          <p className="school-helper">
+            Use the name exactly as the class should appear in attendance and school records.
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="academicYear"
+            className="school-label"
+          >
+            Academic Year
+          </label>
+
+          <input
+            id="academicYear"
+            type="text"
+            name="academicYear"
+            placeholder="Example: 2026-2027"
+            value={formData.academicYear}
+            onChange={handleChange}
+            className="school-input"
+            required
+          />
+
+          <p className="school-helper">
+            A class can repeat across years, so pair the name with the active school year.
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="status"
+            className="school-label"
+          >
+            Status
+          </label>
+
+          <select
+            id="status"
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            className="school-input"
+          >
+            <option value="active">
+              Active
+            </option>
+
+            <option value="inactive">
+              Inactive
+            </option>
+          </select>
+
+          <p className="school-helper">
+            Inactive classes stay in records but are treated as not currently in use.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row">
         <button
           type="submit"
           disabled={loading}
-          className="rounded bg-black px-4 py-2 text-white"
+          className="school-button-primary disabled:cursor-not-allowed disabled:opacity-70"
         >
           {loading
             ? "Saving..."
             : editingClass
-            ? "Update"
-            : "Create"}
+            ? "Update Class"
+            : "Create Class"}
         </button>
 
         {editingClass && (
           <button
             type="button"
             onClick={clearEdit}
-            className="rounded border px-4 py-2"
+            className="school-button-soft"
           >
             Cancel
           </button>

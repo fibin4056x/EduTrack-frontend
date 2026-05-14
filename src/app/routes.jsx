@@ -14,7 +14,9 @@ import TeachersPage from "../features/principal/teachers/pages/TeachersPage.jsx"
 import ProtectedRoute from "./ProtectedRoute.jsx";
 
 import ClassesPage from "../features/principal/classes/pages/ClassesPage.jsx";
+import StudentsPage from "../features/principal/students/pages/StudentsPage.jsx";
 
+import DivisionsPage from "../features/principal/divisions/pages/DivisionsPage.jsx";
 
 function AppRoutes() {
   return (
@@ -53,8 +55,21 @@ function AppRoutes() {
           element={<TeachersPage />}
         />
 
-      </Route>
+        <Route
+          path="/principal/classes"
+          element={<ClassesPage />}
+        />
 
+        <Route
+          path="/principal/students"
+          element={<StudentsPage />}
+        />
+         <Route
+          path="/principal/divisions"
+          element={<DivisionsPage />}
+        />
+      </Route>
+         
 
 
       {/* =========================
@@ -74,12 +89,6 @@ function AppRoutes() {
         />
 
       </Route>
-
-      <Route
-      path="/principal/classes"
-     element={<ClassesPage />}
-     />
-
 
       {/* =========================
           DEFAULT
