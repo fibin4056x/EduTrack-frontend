@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import {
   createTeacher,
-} from "../api/teacher.api";
+} from "../api/teacher.api.js";
 
 
 

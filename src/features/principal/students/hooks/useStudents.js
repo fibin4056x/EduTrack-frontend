@@ -5,7 +5,7 @@ import {
 
 import {
   getStudentsApi,
-} from "../api/student.api";
+} from "../api/student.api.js";
 
 const useStudents = () => {
 

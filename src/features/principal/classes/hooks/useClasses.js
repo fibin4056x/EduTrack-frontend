@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { getClassesApi } from "../api/class.api";
+import { getClassesApi } from "../api/class.api.js";
 
 const useClasses = () => {
   const [classes, setClasses] = useState([]);

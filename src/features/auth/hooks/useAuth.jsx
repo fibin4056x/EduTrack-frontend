@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import API from "../../../lib/api";
 
 const AuthContext = createContext();
@@ -7,12 +13,12 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem("token");
     setUser(null);
-  };
+  }, []);
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
   try {
     const token = localStorage.getItem("token");
 
@@ -29,11 +35,11 @@ export function AuthProvider({ children }) {
   } finally {
     setLoading(false);
   }
-};
+}, [logout]);
 
   useEffect(() => {
     fetchUser();
-  }, []);
+  }, [fetchUser]);
 
   return (
     <AuthContext.Provider value={{ user, setUser, logout, loading }}>

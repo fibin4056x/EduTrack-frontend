@@ -5,7 +5,7 @@ import {
 
 import {
   getTeachers,
-} from "../api/teacher.api";
+} from "../api/teacher.api.js";
 
 
 

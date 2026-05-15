@@ -8,6 +8,7 @@ import LoginPage from "../features/auth/pages/LoginPage.jsx";
 import PrincipalDashboard from "../features/principal/dashboard/pages/DashboardPage.jsx";
 
 import TeacherDashboard from "../features/teacher/dashboard/pages/DashboardPage.jsx";
+import MyStudentsPage from "../features/teacher/students/pages/MyStudentsPage.jsx";
 
 import TeachersPage from "../features/principal/teachers/pages/TeachersPage.jsx";
 
@@ -86,6 +87,11 @@ function AppRoutes() {
         <Route
           path="/teacher/dashboard"
           element={<TeacherDashboard />}
+        />
+
+        <Route
+          path="/teacher/students"
+          element={<MyStudentsPage />}
         />
 
       </Route>
