@@ -1,21 +1,15 @@
-
 import {
   useRef,
   useState,
 } from "react";
 
-import {
-  bulkUploadStudentsApi,
-} from "../api/student.api.js";
-
-
+import { bulkUploadStudentsApi } from "../api/student.api.js";
 
 const BulkStudentUpload = ({
   classes,
   divisions,
   fetchStudents,
 }) => {
-
   const [classId, setClassId] =
     useState("");
 
@@ -25,17 +19,23 @@ const BulkStudentUpload = ({
   const [file, setFile] =
     useState(null);
 
-  const fileInputRef =
-    useRef(null);
-
   const [loading, setLoading] =
     useState(false);
 
+  const [message, setMessage] =
+    useState("");
 
+  const [error, setError] =
+    useState("");
 
+  const fileInputRef =
+    useRef(null);
+
+  // =========================================
+  // FILTER DIVISIONS
+  // =========================================
   const filteredDivisions =
     divisions.filter((division) => {
-
       const divisionClassId =
         division.classId?._id ||
         division.classId;
@@ -46,189 +46,313 @@ const BulkStudentUpload = ({
       );
     });
 
+  // =========================================
+  // HANDLE CLASS CHANGE
+  // =========================================
+  const handleClassChange = (
+    event
+  ) => {
+    setClassId(event.target.value);
 
+    // reset division
+    setDivisionId("");
+  };
 
-  const handleUpload =
-    async (e) => {
+  // =========================================
+  // HANDLE FILE CHANGE
+  // =========================================
+  const handleFileChange = (
+    event
+  ) => {
+    const selectedFile =
+      event.target.files?.[0];
 
-      e.preventDefault();
+    setError("");
+    setMessage("");
 
-      if (
-        !classId ||
-        !divisionId ||
-        !file
-      ) {
+    if (!selectedFile) {
+      setFile(null);
+      return;
+    }
 
-        alert(
-          "Please fill all fields"
+    const allowedTypes = [
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-excel",
+    ];
+
+    if (
+      !allowedTypes.includes(
+        selectedFile.type
+      )
+    ) {
+      setError(
+        "Only Excel files are allowed."
+      );
+
+      event.target.value = "";
+
+      return;
+    }
+
+    setFile(selectedFile);
+  };
+
+  // =========================================
+  // HANDLE UPLOAD
+  // =========================================
+  const handleUpload = async (
+    event
+  ) => {
+    event.preventDefault();
+
+    setError("");
+    setMessage("");
+
+    if (
+      !classId ||
+      !divisionId ||
+      !file
+    ) {
+      setError(
+        "Please fill all fields."
+      );
+
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const formData =
+        new FormData();
+
+      formData.append(
+        "classId",
+        classId
+      );
+
+      formData.append(
+        "divisionId",
+        divisionId
+      );
+
+      formData.append(
+        "file",
+        file
+      );
+
+      const response =
+        await bulkUploadStudentsApi(
+          formData
         );
 
-        return;
+      setMessage(
+        response?.data?.insertedCount
+          ? `${response.data.insertedCount} students uploaded successfully`
+          : "Students uploaded successfully"
+      );
+
+      await fetchStudents();
+
+      // reset form
+      setClassId("");
+      setDivisionId("");
+      setFile(null);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value =
+          "";
       }
+    } catch (error) {
+      console.log(
+        error?.response?.data
+      );
 
-
-
-      try {
-
-        setLoading(true);
-
-        const formData =
-          new FormData();
-
-        formData.append(
-          "classId",
-          classId
-        );
-
-        formData.append(
-          "divisionId",
-          divisionId
-        );
-
-        formData.append(
-          "file",
-          file
-        );
-
-
-
-        const response =
-          await bulkUploadStudentsApi(
-            formData
-          );
-
-
-
-        alert(
-          response?.data?.insertedCount
-            ? `${response.data.insertedCount} students uploaded successfully`
-            : "Students uploaded successfully"
-        );
-
-        await fetchStudents();
-
-        setClassId("");
-        setDivisionId("");
-        setFile(null);
-
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-
-      } catch (error) {
-
-  console.log(error.response?.data);
-
-  alert(
-    error.response?.data?.message ||
-    "Upload failed"
-  );
-
-
-      } finally {
-
-        setLoading(false);
-      }
-    };
-
-
+      setError(
+        error?.response?.data
+          ?.message ||
+          "Upload failed."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <form
       onSubmit={handleUpload}
-      className="space-y-4 rounded border p-4"
+      className="school-card space-y-6 p-6 sm:p-7"
     >
+      {/* =====================================
+          HEADER
+      ===================================== */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span className="school-pill">
+            Bulk Import
+          </span>
 
-      <h2 className="text-lg font-semibold">
-        Bulk Student Upload
-      </h2>
+          <h2 className="mt-4 text-2xl font-bold text-slate-900">
+            Upload student records
+          </h2>
 
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            Select the class and
+            division before uploading
+            the Excel spreadsheet.
+          </p>
+        </div>
 
+        <div className="rounded-3xl border border-slate-200 bg-slate-50 px-5 py-4">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+            Accepted File
+          </p>
 
-      <select
-        value={classId}
-        onChange={(e) =>
-          setClassId(e.target.value)
-        }
-        className="w-full rounded border p-3"
-      >
+          <p className="mt-2 text-sm font-semibold text-slate-800">
+            .xlsx or .xls
+          </p>
+        </div>
+      </div>
 
-        <option value="">
-          Select Class
-        </option>
-
-        {classes.map((item) => (
-
-          <option
-            key={item._id}
-            value={item._id}
+      {/* =====================================
+          FORM GRID
+      ===================================== */}
+      <div className="grid gap-5 lg:grid-cols-[1fr,1fr,1.2fr]">
+        {/* CLASS */}
+        <div>
+          <label
+            htmlFor="bulk-class"
+            className="school-label"
           >
-            {item.name}
-          </option>
-        ))}
-      </select>
+            Class
+          </label>
 
-
-
-      <select
-        value={divisionId}
-        onChange={(e) =>
-          setDivisionId(e.target.value)
-        }
-        className="w-full rounded border p-3"
-      >
-
-        <option value="">
-          Select Division
-        </option>
-
-        {filteredDivisions.map(
-          (division) => (
-
-            <option
-              key={division._id}
-              value={division._id}
-            >
-              {division.name}
+          <select
+            id="bulk-class"
+            value={classId}
+            onChange={
+              handleClassChange
+            }
+            className="school-select"
+            disabled={loading}
+          >
+            <option value="">
+              Select Class
             </option>
-          )
-        )}
-      </select>
 
+            {classes.map((item) => (
+              <option
+                key={item._id}
+                value={item._id}
+              >
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
+        {/* DIVISION */}
+        <div>
+          <label
+            htmlFor="bulk-division"
+            className="school-label"
+          >
+            Division
+          </label>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".xlsx,.xls"
-        onChange={(e) =>
-          setFile(
-            e.target.files[0] ||
-              null
-          )
-        }
-        className="w-full"
-      />
+          <select
+            id="bulk-division"
+            value={divisionId}
+            onChange={(event) =>
+              setDivisionId(
+                event.target.value
+              )
+            }
+            className="school-select"
+            disabled={
+              !classId || loading
+            }
+          >
+            <option value="">
+              Select Division
+            </option>
 
+            {filteredDivisions.map(
+              (division) => (
+                <option
+                  key={division._id}
+                  value={division._id}
+                >
+                  {division.name}
+                </option>
+              )
+            )}
+          </select>
+        </div>
 
+        {/* FILE */}
+        <div>
+          <label
+            htmlFor="bulk-file"
+            className="school-label"
+          >
+            Spreadsheet File
+          </label>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="rounded bg-black px-4 py-2 text-white"
-      >
+          <input
+            id="bulk-file"
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={
+              handleFileChange
+            }
+            className="school-file-input"
+            disabled={loading}
+          />
+        </div>
+      </div>
 
-        {loading
-          ? "Uploading..."
-          : "Upload Students"}
+      {/* =====================================
+          SUCCESS MESSAGE
+      ===================================== */}
+      {message && (
+        <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          {message}
+        </div>
+      )}
 
-      </button>
+      {/* =====================================
+          ERROR MESSAGE
+      ===================================== */}
+      {error && (
+        <div className="rounded-3xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {error}
+        </div>
+      )}
 
+      {/* =====================================
+          ACTIONS
+      ===================================== */}
+      <div className="flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <button
+          type="submit"
+          disabled={loading}
+          className="school-button-primary disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {loading
+            ? "Uploading..."
+            : "Upload Students"}
+        </button>
+
+        <p className="text-sm text-slate-500">
+          Imported students will
+          appear in the register
+          after upload completes.
+        </p>
+      </div>
     </form>
   );
 };
 
-
-
 export default BulkStudentUpload;
-

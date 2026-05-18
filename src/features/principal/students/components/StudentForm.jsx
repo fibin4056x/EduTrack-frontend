@@ -1,4 +1,3 @@
-
 import {
   useEffect,
   useState,
@@ -6,12 +5,10 @@ import {
 
 import {
   createStudentApi,
-  updateStudentApi,
   getClassesApi,
   getDivisionsApi,
+  updateStudentApi,
 } from "../api/student.api.js";
-
-
 
 const initialState = {
   classId: "",
@@ -25,19 +22,15 @@ const initialState = {
   examRegisterNumber: "",
 };
 
-
-
 const StudentForm = ({
   editingStudent,
   fetchStudents,
   clearEdit,
   onClose,
 }) => {
-
-  /* =========================================
-     STATE
-  ========================================= */
-
+  // =========================================
+  // STATES
+  // =========================================
   const [formData, setFormData] =
     useState(initialState);
 
@@ -50,154 +43,119 @@ const StudentForm = ({
   const [loading, setLoading] =
     useState(false);
 
+  const [error, setError] =
+    useState("");
 
+  const [success, setSuccess] =
+    useState("");
 
+  // =========================================
+  // FILTER DIVISIONS
+  // =========================================
+  const filteredDivisions =
+    divisions.filter((division) => {
+      const divisionClassId =
+        division.classId?._id ||
+        division.classId;
 
+      return (
+        String(divisionClassId) ===
+        String(formData.classId)
+      );
+    });
 
-
-/* =========================================
-   FILTER DIVISIONS BY SELECTED CLASS
-========================================= */
-
-const filteredDivisions =
-  divisions.filter((division) => {
-
-    const divisionClassId =
-      division.classId?._id ||
-      division.classId;
-
-    return (
-      String(divisionClassId) ===
-      String(formData.classId)
-    );
-  });
-
-
-
-
-
-  /* =========================================
-     FETCH CLASSES
-  ========================================= */
-
-  const fetchClasses =
+  // =========================================
+  // FETCH DATA
+  // =========================================
+  const fetchInitialData =
     async () => {
-
       try {
-
-        const response =
-          await getClassesApi();
+        const [
+          classesResponse,
+          divisionsResponse,
+        ] = await Promise.all([
+          getClassesApi(),
+          getDivisionsApi(),
+        ]);
 
         setClasses(
-          response.data || []
+          classesResponse.data || []
         );
-
-      } catch (error) {
-
-        console.error(
-          "Fetch classes error:",
-          error
-        );
-      }
-    };
-
-
-
-  /* =========================================
-     FETCH DIVISIONS
-  ========================================= */
-
-  const fetchDivisions =
-    async () => {
-
-      try {
-
-        const response =
-          await getDivisionsApi();
 
         setDivisions(
-          response.data || []
+          divisionsResponse.data || []
+        );
+      } catch (error) {
+        console.error(
+          "Initial fetch error:",
+          error
         );
 
-      } catch (error) {
-
-        console.error(
-          "Fetch divisions error:",
-          error
+        setError(
+          "Failed to load form data."
         );
       }
     };
 
-
-
-  /* =========================================
-     INITIAL FETCH
-  ========================================= */
-
+  // =========================================
+  // INITIAL FETCH
+  // =========================================
   useEffect(() => {
-
-    fetchClasses();
-
-    fetchDivisions();
-
+    fetchInitialData();
   }, []);
 
-
-
-  /* =========================================
-     EDIT MODE
-  ========================================= */
-
+  // =========================================
+  // EDIT MODE
+  // =========================================
   useEffect(() => {
-
     if (editingStudent) {
-
       setFormData({
         classId:
-          editingStudent.classId?._id || "",
+          editingStudent.classId?._id ||
+          "",
 
         divisionId:
-          editingStudent.divisionId?._id || "",
+          editingStudent.divisionId
+            ?._id || "",
 
         admissionDate:
-          editingStudent.admissionDate
-            ?.split("T")[0] || "",
+          editingStudent.admissionDate?.split(
+            "T"
+          )[0] || "",
 
         nameEnglish:
-          editingStudent.nameEnglish || "",
+          editingStudent.nameEnglish ||
+          "",
 
         nameArabic:
-          editingStudent.nameArabic || "",
+          editingStudent.nameArabic ||
+          "",
 
         gender:
           editingStudent.gender || "",
 
         dateOfBirth:
-          editingStudent.dateOfBirth
-            ?.split("T")[0] || "",
+          editingStudent.dateOfBirth?.split(
+            "T"
+          )[0] || "",
 
         aadhaarNumber:
-          editingStudent.aadhaarNumber || "",
+          editingStudent.aadhaarNumber ||
+          "",
 
         examRegisterNumber:
-          editingStudent.examRegisterNumber || "",
+          editingStudent.examRegisterNumber ||
+          "",
       });
-
     } else {
-
       setFormData(initialState);
     }
-
   }, [editingStudent]);
 
-
-
-  /* =========================================
-     RESET INVALID DIVISION
-  ========================================= */
-
+  // =========================================
+  // RESET INVALID DIVISION
+  // =========================================
   useEffect(() => {
-
     if (
       formData.classId &&
       formData.divisionId &&
@@ -207,336 +165,454 @@ const filteredDivisions =
           formData.divisionId
       )
     ) {
-
-      setFormData((prev) => ({
-        ...prev,
+      setFormData((previous) => ({
+        ...previous,
         divisionId: "",
       }));
     }
-
   }, [
     formData.classId,
     formData.divisionId,
     filteredDivisions,
   ]);
 
-
-
-  /* =========================================
-     HANDLE CHANGE
-  ========================================= */
-
-  const handleChange = (e) => {
-
+  // =========================================
+  // HANDLE CHANGE
+  // =========================================
+  const handleChange = (event) => {
     const { name, value } =
-      e.target;
+      event.target;
 
-    setFormData((prev) => ({
-      ...prev,
+    // Aadhaar sanitization
+    if (name === "aadhaarNumber") {
+      const numericValue =
+        value.replace(/\D/g, "");
+
+      setFormData((previous) => ({
+        ...previous,
+        [name]: numericValue,
+      }));
+
+      return;
+    }
+
+    setFormData((previous) => ({
+      ...previous,
       [name]: value,
     }));
   };
 
+  // =========================================
+  // HANDLE SUBMIT
+  // =========================================
+  const handleSubmit = async (
+    event
+  ) => {
+    event.preventDefault();
 
+    if (loading) return;
 
-  /* =========================================
-     SUBMIT
-  ========================================= */
+    setError("");
+    setSuccess("");
 
-  const handleSubmit =
-    async (e) => {
+    try {
+      setLoading(true);
 
-      e.preventDefault();
+      const payload = {
+        ...formData,
 
-      try {
+        nameEnglish:
+          formData.nameEnglish.trim(),
 
-        setLoading(true);
+        nameArabic:
+          formData.nameArabic.trim(),
 
-        if (editingStudent) {
+        examRegisterNumber:
+          formData.examRegisterNumber.trim(),
+      };
 
-          await updateStudentApi(
-            editingStudent._id,
-            formData
-          );
+      if (editingStudent) {
+        await updateStudentApi(
+          editingStudent._id,
+          payload
+        );
 
-        } else {
+        setSuccess(
+          "Student updated successfully."
+        );
+      } else {
+        await createStudentApi(
+          payload
+        );
 
-          await createStudentApi(
-            formData
-          );
-        }
+        setSuccess(
+          "Student created successfully."
+        );
+      }
 
-        setFormData(initialState);
+      await fetchStudents();
 
-        fetchStudents();
+      setFormData(initialState);
 
+      // close modal after short delay
+      setTimeout(() => {
         if (onClose) {
           onClose();
         } else {
           clearEdit();
         }
+      }, 700);
+    } catch (error) {
+      console.error(
+        "Student save error:",
+        error
+      );
 
-      } catch (error) {
-
-        console.error(
-          "Student save error:",
-          error
-        );
-
-        alert(
-          error?.response?.data
-            ?.message ||
-          "Something went wrong"
-        );
-
-      } finally {
-
-        setLoading(false);
-      }
-    };
-
-
+      setError(
+        error?.response?.data
+          ?.message ||
+          "Something went wrong."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6"
+      className="space-y-6 p-6 sm:p-8"
     >
+      {/* =====================================
+          SUCCESS MESSAGE
+      ===================================== */}
+      {success && (
+        <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          {success}
+        </div>
+      )}
 
       {/* =====================================
-         ACADEMIC INFO
+          ERROR MESSAGE
       ===================================== */}
+      {error && (
+        <div className="rounded-3xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {error}
+        </div>
+      )}
 
-      <div className="space-y-4">
+      <div className="grid gap-5 xl:grid-cols-3">
+        {/* =====================================
+            ACADEMIC SECTION
+        ===================================== */}
+        <section className="rounded-[28px] bg-slate-50/80 p-5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+            Academic Information
+          </p>
 
-        <h2 className="text-lg font-semibold">
-          Academic Information
-        </h2>
-
-        <select
-          name="classId"
-          value={formData.classId}
-          onChange={handleChange}
-          className="w-full rounded border p-3"
-          required
-        >
-
-          <option value="">
-            Select Class
-          </option>
-
-          {classes.map((item) => (
-
-            <option
-              key={item._id}
-              value={item._id}
-            >
-              {item.name}
-            </option>
-          ))}
-        </select>
-
-
-
-        <select
-          name="divisionId"
-          value={formData.divisionId}
-          onChange={handleChange}
-          className="w-full rounded border p-3"
-          required
-        >
-
-          <option value="">
-            Select Division
-          </option>
-
-          {filteredDivisions.map(
-            (division) => (
-
-              <option
-                key={division._id}
-                value={division._id}
+          <div className="mt-5 space-y-4">
+            {/* CLASS */}
+            <div>
+              <label
+                htmlFor="classId"
+                className="school-label"
               >
-                {division.name}
-              </option>
-            )
-          )}
-        </select>
+                Class
+              </label>
 
+              <select
+                id="classId"
+                name="classId"
+                value={formData.classId}
+                onChange={handleChange}
+                className="school-select"
+                disabled={loading}
+                required
+              >
+                <option value="">
+                  Select Class
+                </option>
 
+                {classes.map((item) => (
+                  <option
+                    key={item._id}
+                    value={item._id}
+                  >
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <input
-          type="date"
-          name="admissionDate"
-          value={
-            formData.admissionDate
-          }
-          onChange={handleChange}
-          className="w-full rounded border p-3"
-          required
-        />
+            {/* DIVISION */}
+            <div>
+              <label
+                htmlFor="divisionId"
+                className="school-label"
+              >
+                Division
+              </label>
 
+              <select
+                id="divisionId"
+                name="divisionId"
+                value={formData.divisionId}
+                onChange={handleChange}
+                className="school-select"
+                disabled={
+                  !formData.classId ||
+                  loading
+                }
+                required
+              >
+                <option value="">
+                  Select Division
+                </option>
+
+                {filteredDivisions.map(
+                  (division) => (
+                    <option
+                      key={division._id}
+                      value={division._id}
+                    >
+                      {division.name}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+
+            {/* ADMISSION DATE */}
+            <div>
+              <label
+                htmlFor="admissionDate"
+                className="school-label"
+              >
+                Admission Date
+              </label>
+
+              <input
+                id="admissionDate"
+                type="date"
+                name="admissionDate"
+                value={
+                  formData.admissionDate
+                }
+                onChange={handleChange}
+                className="school-input"
+                disabled={loading}
+                required
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* =====================================
+            STUDENT INFO
+        ===================================== */}
+        <section className="rounded-[28px] bg-slate-50/80 p-5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+            Student Information
+          </p>
+
+          <div className="mt-5 space-y-4">
+            {/* NAME ENGLISH */}
+            <div>
+              <label
+                htmlFor="nameEnglish"
+                className="school-label"
+              >
+                Student Name in English
+              </label>
+
+              <input
+                id="nameEnglish"
+                type="text"
+                name="nameEnglish"
+                placeholder="Enter student name"
+                value={
+                  formData.nameEnglish
+                }
+                onChange={handleChange}
+                className="school-input"
+                disabled={loading}
+                required
+              />
+            </div>
+
+            {/* NAME ARABIC */}
+            <div>
+              <label
+                htmlFor="nameArabic"
+                className="school-label"
+              >
+                Student Name in Arabic
+              </label>
+
+              <input
+                id="nameArabic"
+                type="text"
+                name="nameArabic"
+                placeholder="Optional"
+                value={
+                  formData.nameArabic
+                }
+                onChange={handleChange}
+                className="school-input"
+                disabled={loading}
+              />
+            </div>
+
+            {/* GENDER */}
+            <div>
+              <label
+                htmlFor="gender"
+                className="school-label"
+              >
+                Gender
+              </label>
+
+              <select
+                id="gender"
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                className="school-select"
+                disabled={loading}
+              >
+                <option value="">
+                  Select Gender
+                </option>
+
+                <option value="male">
+                  Male
+                </option>
+
+                <option value="female">
+                  Female
+                </option>
+
+                <option value="other">
+                  Other
+                </option>
+              </select>
+            </div>
+
+            {/* DOB */}
+            <div>
+              <label
+                htmlFor="dateOfBirth"
+                className="school-label"
+              >
+                Date of Birth
+              </label>
+
+              <input
+                id="dateOfBirth"
+                type="date"
+                name="dateOfBirth"
+                value={
+                  formData.dateOfBirth
+                }
+                onChange={handleChange}
+                className="school-input"
+                disabled={loading}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* =====================================
+            IDENTITY SECTION
+        ===================================== */}
+        <section className="rounded-[28px] bg-slate-50/80 p-5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+            Identity Information
+          </p>
+
+          <div className="mt-5 space-y-4">
+            {/* AADHAAR */}
+            <div>
+              <label
+                htmlFor="aadhaarNumber"
+                className="school-label"
+              >
+                Aadhaar Number
+              </label>
+
+              <input
+                id="aadhaarNumber"
+                type="text"
+                name="aadhaarNumber"
+                placeholder="Enter Aadhaar number"
+                value={
+                  formData.aadhaarNumber
+                }
+                onChange={handleChange}
+                className="school-input"
+                maxLength={12}
+                inputMode="numeric"
+                disabled={loading}
+              />
+            </div>
+
+            {/* EXAM NUMBER */}
+            <div>
+              <label
+                htmlFor="examRegisterNumber"
+                className="school-label"
+              >
+                Exam Register Number
+              </label>
+
+              <input
+                id="examRegisterNumber"
+                type="text"
+                name="examRegisterNumber"
+                placeholder="Enter exam register number"
+                value={
+                  formData.examRegisterNumber
+                }
+                onChange={handleChange}
+                className="school-input"
+                disabled={loading}
+              />
+            </div>
+          </div>
+        </section>
       </div>
 
-
-
       {/* =====================================
-         STUDENT INFO
+          ACTIONS
       ===================================== */}
-
-      <div className="space-y-4">
-
-        <h2 className="text-lg font-semibold">
-          Student Information
-        </h2>
-
-        <input
-          type="text"
-          name="nameEnglish"
-          placeholder="Student Name (English)"
-          value={
-            formData.nameEnglish
-          }
-          onChange={handleChange}
-          className="w-full rounded border p-3"
-          required
-        />
-
-
-
-        <input
-          type="text"
-          name="nameArabic"
-          placeholder="Student Name (Arabic)"
-          value={
-            formData.nameArabic
-          }
-          onChange={handleChange}
-          className="w-full rounded border p-3"
-        />
-
-
-
-        <select
-          name="gender"
-          value={formData.gender}
-          onChange={handleChange}
-          className="w-full rounded border p-3"
-        >
-
-          <option value="">
-            Select Gender
-          </option>
-
-          <option value="male">
-            Male
-          </option>
-
-          <option value="female">
-            Female
-          </option>
-
-          <option value="other">
-            Other
-          </option>
-
-        </select>
-
-
-
-        <input
-          type="date"
-          name="dateOfBirth"
-          value={
-            formData.dateOfBirth
-          }
-          onChange={handleChange}
-          className="w-full rounded border p-3"
-        />
-
-      </div>
-
-
-
-      {/* =====================================
-         IDENTITY INFO
-      ===================================== */}
-
-      <div className="space-y-4">
-
-        <h2 className="text-lg font-semibold">
-          Identity Information
-        </h2>
-
-        <input
-          type="text"
-          name="aadhaarNumber"
-          placeholder="Aadhaar Number"
-          value={
-            formData.aadhaarNumber
-          }
-          onChange={handleChange}
-          className="w-full rounded border p-3"
-        />
-
-
-
-        <input
-          type="text"
-          name="examRegisterNumber"
-          placeholder="Exam Register Number"
-          value={
-            formData.examRegisterNumber
-          }
-          onChange={handleChange}
-          className="w-full rounded border p-3"
-        />
-
-      </div>
-
-
-
-      {/* =====================================
-         BUTTONS
-      ===================================== */}
-
-      <div className="flex gap-3">
-
+      <div className="flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row">
         <button
           type="submit"
           disabled={loading}
-          className="rounded bg-black px-4 py-2 text-white"
+          className="school-button-primary disabled:cursor-not-allowed disabled:opacity-70"
         >
-
           {loading
             ? "Saving..."
             : editingStudent
-            ? "Update"
-            : "Create"}
-
+            ? "Update Student"
+            : "Create Student"}
         </button>
 
-
-
         {editingStudent && (
-
           <button
             type="button"
             onClick={
               onClose || clearEdit
             }
-            className="rounded border px-4 py-2"
+            disabled={loading}
+            className="school-button-soft"
           >
             Cancel
           </button>
         )}
-
       </div>
-
     </form>
   );
 };
-
-
 
 export default StudentForm;

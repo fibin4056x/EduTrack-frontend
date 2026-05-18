@@ -1,19 +1,41 @@
 import { Link } from "react-router-dom";
 
 function Navbar() {
-  return (
-    <header className="h-14 border-b bg-white">
-      <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
-        <Link to="/login" className="text-lg font-semibold">
-          SLMS
-        </Link>
 
-        <span className="text-sm text-gray-500">
-          School Learning System
-        </span>
+return (
+  <div className="flex items-center justify-between border-b pb-4">
+
+    {/* Brand */}
+    <Link
+      to="/login"
+      className="flex items-center gap-3"
+    >
+
+      <div className="flex h-10 w-10 items-center justify-center rounded-md bg-gray-900 text-sm font-bold text-white">
+        SL
       </div>
-    </header>
-  );
+
+      <div>
+        <h1 className="text-sm font-semibold text-gray-800">
+          SLMS
+        </h1>
+
+        <p className="text-xs text-gray-500">
+          LP School
+        </p>
+      </div>
+
+    </Link>
+
+    {/* Status */}
+    <div className="hidden sm:block">
+      <span className="badge-muted">
+        Secure Access
+      </span>
+    </div>
+
+  </div>
+);
 }
 
 export default Navbar;

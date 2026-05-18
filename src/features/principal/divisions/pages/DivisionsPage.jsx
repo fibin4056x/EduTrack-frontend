@@ -1,135 +1,169 @@
 import { useState } from "react";
 
-import useDivisions
-  from "../hooks/useDivisions.js";
-
-import AddDivisionModal
-  from "../components/AddDivisionModal.jsx";
-
-import DivisionTable
-  from "../components/DivisionTable.jsx";
-
-
+import AddDivisionModal from "../components/AddDivisionModal.jsx";
+import DivisionTable from "../components/DivisionTable.jsx";
+import useDivisions from "../hooks/useDivisions.js";
 
 const DivisionsPage = () => {
-
   const {
     divisions,
     loading,
     fetchDivisions,
   } = useDivisions();
 
-
-
-
-  const [isModalOpen,
-    setIsModalOpen] =
+  const [isModalOpen, setIsModalOpen] =
     useState(false);
-
-  const [editingDivision,
-    setEditingDivision] =
+  const [editingDivision, setEditingDivision] =
     useState(null);
 
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingDivision(null);
+  };
 
+  const activeDivisions =
+    divisions.filter(
+      (division) =>
+        division.status === "active"
+    ).length;
 
+  const totalCapacity =
+    divisions.reduce(
+      (total, division) =>
+        total +
+        (Number(division.capacity) || 0),
+      0
+    );
 
-  /* =========================================
-     CLOSE MODAL
-  ========================================= */
-
-  const handleCloseModal =
-    () => {
-
-      setIsModalOpen(false);
-
-      setEditingDivision(null);
-    };
-
-
-
+  const assignedTeachers =
+    divisions.filter((division) =>
+      Boolean(
+        division.assignedTeacher?._id ||
+          division.assignedTeacher
+      )
+    ).length;
 
   return (
-    <div className="space-y-6">
+  <div className="page">
 
+    {/* Header */}
+    <div className="section flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
+      <div>
 
-
-      {/* HEADER */}
-
-      <div className="flex items-center justify-between">
-
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-2xl font-bold text-gray-800">
           Divisions
         </h1>
 
-
-
-
-        <button
-          onClick={() =>
-            setIsModalOpen(true)
-          }
-          className="rounded bg-black px-4 py-2 text-white"
-        >
-          Add Division
-        </button>
+        <p className="text-sm text-gray-500">
+          Manage school divisions and teachers
+        </p>
 
       </div>
 
-
-
-
-      {/* TABLE */}
-
-      {loading ? (
-
-        <p>Loading...</p>
-
-      ) : (
-
-        <DivisionTable
-          divisions={divisions}
-
-          fetchDivisions={
-            fetchDivisions
-          }
-
-          setEditingDivision={
-            setEditingDivision
-          }
-
-          openModal={() =>
-            setIsModalOpen(true)
-          }
-        />
-      )}
-
-
-
-
-      {/* MODAL */}
-
-      <AddDivisionModal
-        isOpen={isModalOpen}
-
-        onClose={handleCloseModal}
-
-        editingDivision={
-          editingDivision
+      <button
+        onClick={() =>
+          setIsModalOpen(true)
         }
+        className="btn-primary"
+      >
+        Add Division
+      </button>
 
-        fetchDivisions={
-          fetchDivisions
+    </div>
+
+    {/* Stats */}
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+      <div className="section">
+
+        <p className="text-sm text-gray-500">
+          Total Divisions
+        </p>
+
+        <h2 className="mt-2 text-3xl font-bold text-gray-800">
+          {divisions.length}
+        </h2>
+
+      </div>
+
+      <div className="section">
+
+        <p className="text-sm text-gray-500">
+          Active Divisions
+        </p>
+
+        <h2 className="mt-2 text-3xl font-bold text-gray-800">
+          {activeDivisions}
+        </h2>
+
+      </div>
+
+      <div className="section">
+
+        <p className="text-sm text-gray-500">
+          Assigned Teachers
+        </p>
+
+        <h2 className="mt-2 text-3xl font-bold text-gray-800">
+          {assignedTeachers}
+        </h2>
+
+      </div>
+
+      <div className="section">
+
+        <p className="text-sm text-gray-500">
+          Total Capacity
+        </p>
+
+        <h2 className="mt-2 text-3xl font-bold text-gray-800">
+          {totalCapacity}
+        </h2>
+
+      </div>
+
+    </div>
+
+    {/* Table */}
+    {loading ? (
+
+      <div className="section">
+
+        <p className="text-sm text-gray-500">
+          Loading divisions...
+        </p>
+
+      </div>
+
+    ) : (
+
+      <DivisionTable
+        divisions={divisions}
+        fetchDivisions={fetchDivisions}
+        setEditingDivision={
+          setEditingDivision
         }
-
-        clearEdit={() =>
-          setEditingDivision(null)
+        openModal={() =>
+          setIsModalOpen(true)
         }
       />
-    </div>
-  );
+
+    )}
+
+    {/* Modal */}
+    <AddDivisionModal
+      isOpen={isModalOpen}
+      onClose={handleCloseModal}
+      editingDivision={editingDivision}
+      fetchDivisions={fetchDivisions}
+      clearEdit={() =>
+        setEditingDivision(null)
+      }
+    />
+
+  </div>
+);
 };
-
-
 
 export default DivisionsPage;

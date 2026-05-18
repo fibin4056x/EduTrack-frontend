@@ -1,16 +1,23 @@
 import { Outlet } from "react-router-dom";
+
 import Navbar from "../components/ui/Navbar";
 
 function AuthLayout() {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar />
+    <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-8">
+      <div className="w-full max-w-md">
+        {/* =====================================
+            NAVBAR
+        ===================================== */}
+        <Navbar />
 
-      <main className="flex-1 flex items-center justify-center px-4">
-        <div className="w-full max-w-md">
+        {/* =====================================
+            AUTH CARD
+        ===================================== */}
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <Outlet />
         </div>
-      </main>
+      </div>
     </div>
   );
 }

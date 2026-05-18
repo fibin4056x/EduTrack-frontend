@@ -1,36 +1,26 @@
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 
-import { getTeachers } from "../../teachers/api/teacher.api.js";
-import { getStudentsApi } from "../../students/api/student.api.js";
 import { getClassesApi } from "../../classes/api/class.api.js";
-
-const initialCounts = {
-  teachers: 0,
-  students: 0,
-  classes: 0,
-};
+import { getStudentsApi } from "../../students/api/student.api.js";
+import { getTeachers } from "../../teachers/api/teacher.api.js";
 
 function DashboardPage() {
-  const [counts, setCounts] =
-    useState(initialCounts);
+  const [counts, setCounts] = useState({
+    teachers: 0,
+    students: 0,
+    classes: 0,
+  });
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCounts = async () => {
       try {
-        setLoading(true);
-
-        const results =
-          await Promise.allSettled([
-            getTeachers(),
-            getStudentsApi(),
-            getClassesApi(),
-          ]);
+        const results = await Promise.allSettled([
+          getTeachers(),
+          getStudentsApi(),
+          getClassesApi(),
+        ]);
 
         const [
           teachersResult,
@@ -40,30 +30,22 @@ function DashboardPage() {
 
         setCounts({
           teachers:
-            teachersResult.status ===
-            "fulfilled"
-              ? teachersResult.value.data
-                  ?.length || 0
+            teachersResult.status === "fulfilled"
+              ? teachersResult.value.data?.length || 0
               : 0,
-          students:
-            studentsResult.status ===
-            "fulfilled"
-              ? studentsResult.value.data
-                  ?.length || 0
-              : 0,
-          classes:
-            classesResult.status ===
-            "fulfilled"
-              ? classesResult.value.data
-                  ?.length || 0
-              : 0,
-        });
 
-        results.forEach((result) => {
-          if (result.status === "rejected") {
-            console.error(result.reason);
-          }
+          students:
+            studentsResult.status === "fulfilled"
+              ? studentsResult.value.data?.length || 0
+              : 0,
+
+          classes:
+            classesResult.status === "fulfilled"
+              ? classesResult.value.data?.length || 0
+              : 0,
         });
+      } catch (error) {
+        console.log(error);
       } finally {
         setLoading(false);
       }
@@ -72,63 +54,64 @@ function DashboardPage() {
     fetchCounts();
   }, []);
 
-  const summaryCards = [
+  const cards = [
     {
-      label: "Teachers",
+      title: "Teachers",
       value: counts.teachers,
-      tone:
-        "from-sky-500/15 to-cyan-400/10",
     },
     {
-      label: "Students",
+      title: "Students",
       value: counts.students,
-      tone:
-        "from-emerald-500/15 to-lime-400/10",
     },
     {
-      label: "Classes",
+      title: "Classes",
       value: counts.classes,
-      tone:
-        "from-amber-500/15 to-orange-400/10",
     },
   ];
 
   return (
     <div className="space-y-6">
-      <section className="school-card overflow-hidden p-6 sm:p-8">
-        <span className="school-pill">
-          Principal Overview
-        </span>
-
-        <h1 className="mt-4 text-3xl font-bold text-slate-900">
-          School dashboard at a glance
+      {/* Header */}
+      <div className="rounded-xl bg-white p-6 shadow-sm border">
+        <h1 className="text-2xl font-bold text-gray-800">
+          School Dashboard
         </h1>
 
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-          These numbers are now pulled from your live teachers, students, and classes data.
+        <p className="mt-1 text-sm text-gray-500">
+          Manage teachers, students, and classes easily.
         </p>
-      </section>
+      </div>
 
-      <section className="grid gap-4 md:grid-cols-3">
-        {summaryCards.map((card) => (
+      {/* Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {cards.map((card) => (
           <div
-            key={card.label}
-            className={`school-card overflow-hidden bg-gradient-to-br ${card.tone} p-6`}
+            key={card.title}
+            className="rounded-xl border bg-white p-5 shadow-sm"
           >
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400">
-              {card.label}
+            <p className="text-sm text-gray-500">
+              {card.title}
             </p>
 
-            <p className="mt-5 text-4xl font-bold text-slate-900">
+            <h2 className="mt-3 text-3xl font-bold text-gray-800">
               {loading ? "..." : card.value}
-            </p>
-
-            <p className="mt-2 text-sm text-slate-500">
-              Total {card.label.toLowerCase()} currently available in the system.
-            </p>
+            </h2>
           </div>
         ))}
-      </section>
+      </div>
+
+      {/* Quick Info */}
+      <div className="rounded-xl border bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-gray-800">
+          Overview
+        </h2>
+
+        <p className="mt-2 text-sm leading-6 text-gray-600">
+          This dashboard helps administrators manage
+          school records including students, teachers,
+          and classes from one place.
+        </p>
+      </div>
     </div>
   );
 }

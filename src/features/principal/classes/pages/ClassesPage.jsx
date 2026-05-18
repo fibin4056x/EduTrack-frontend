@@ -28,95 +28,110 @@ const ClassesPage = () => {
     classes[0]?.academicYear || "Not added";
 
   return (
-    <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-[32px] bg-[linear-gradient(135deg,#111827_0%,#0f766e_55%,#2dd4bf_100%)] px-6 py-8 text-white shadow-2xl sm:px-8">
-        <div className="absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent_48%)]" />
+  <div className="page">
 
-        <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-teal-50">
-              LP School Class Register
-            </span>
+    {/* Header */}
+    <div className="section flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-            <h1 className="mt-5 text-3xl font-bold leading-tight text-white sm:text-4xl">
-              Organize classes by year, keep the register simple, and make the school structure clear.
-            </h1>
+      <div>
 
-            <p className="mt-4 max-w-xl text-sm leading-7 text-teal-50/90 sm:text-base">
-              This class section now follows the real class model: class name, academic year, and status only.
-            </p>
-          </div>
+        <h1 className="text-2xl font-bold text-gray-800">
+          Classes
+        </h1>
 
-          <div className="rounded-[24px] border border-white/15 bg-white/10 px-5 py-4 backdrop-blur">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-100">
-              Latest Academic Year
-            </p>
+        <p className="text-sm text-gray-500">
+          Manage school classes and academic years
+        </p>
 
-            <p className="mt-2 text-2xl font-bold text-white">
-              {latestAcademicYear}
-            </p>
-          </div>
-        </div>
-      </section>
+      </div>
 
-      <section className="grid gap-4 sm:grid-cols-3">
-        <div className="school-card p-5">
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400">
-            Total Classes
-          </p>
+      <div className="rounded-md border bg-gray-50 px-4 py-3">
 
-          <p className="mt-4 text-3xl font-bold text-slate-900">
-            {classes.length}
-          </p>
-        </div>
+        <p className="text-xs text-gray-500">
+          Latest Academic Year
+        </p>
 
-        <div className="school-card p-5">
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400">
-            Active Classes
-          </p>
+        <p className="text-lg font-semibold text-gray-800">
+          {latestAcademicYear}
+        </p>
 
-          <p className="mt-4 text-3xl font-bold text-slate-900">
-            {activeClasses}
-          </p>
-        </div>
+      </div>
 
-        <div className="school-card p-5">
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400">
-            Inactive Classes
-          </p>
+    </div>
 
-          <p className="mt-4 text-3xl font-bold text-slate-900">
-            {inactiveClasses}
-          </p>
-        </div>
-      </section>
+    {/* Stats */}
+    <div className="grid gap-4 sm:grid-cols-3">
 
-      <ClassForm
-        editingClass={editingClass}
+      <div className="section">
+
+        <p className="text-sm text-gray-500">
+          Total Classes
+        </p>
+
+        <h2 className="mt-2 text-3xl font-bold text-gray-800">
+          {classes.length}
+        </h2>
+
+      </div>
+
+      <div className="section">
+
+        <p className="text-sm text-gray-500">
+          Active Classes
+        </p>
+
+        <h2 className="mt-2 text-3xl font-bold text-gray-800">
+          {activeClasses}
+        </h2>
+
+      </div>
+
+      <div className="section">
+
+        <p className="text-sm text-gray-500">
+          Inactive Classes
+        </p>
+
+        <h2 className="mt-2 text-3xl font-bold text-gray-800">
+          {inactiveClasses}
+        </h2>
+
+      </div>
+
+    </div>
+
+    {/* Form */}
+    <ClassForm
+      editingClass={editingClass}
+      fetchClasses={fetchClasses}
+      clearEdit={() =>
+        setEditingClass(null)
+      }
+    />
+
+    {/* Table */}
+    {loading ? (
+
+      <div className="section">
+
+        <p className="text-sm text-gray-500">
+          Loading classes...
+        </p>
+
+      </div>
+
+    ) : (
+
+      <ClassesTable
+        classes={classes}
         fetchClasses={fetchClasses}
-        clearEdit={() =>
-          setEditingClass(null)
-        }
+        setEditingClass={setEditingClass}
       />
 
-      {loading ? (
-        <div className="school-card p-6 sm:p-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 w-56 rounded-full bg-slate-200" />
-            <div className="h-20 rounded-[28px] bg-slate-100" />
-            <div className="h-20 rounded-[28px] bg-slate-100" />
-            <div className="h-20 rounded-[28px] bg-slate-100" />
-          </div>
-        </div>
-      ) : (
-        <ClassesTable
-          classes={classes}
-          fetchClasses={fetchClasses}
-          setEditingClass={setEditingClass}
-        />
-      )}
-    </div>
-  );
+    )}
+
+  </div>
+);
 };
 
 export default ClassesPage;

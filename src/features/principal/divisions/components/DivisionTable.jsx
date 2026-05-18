@@ -1,8 +1,9 @@
-import {
-  deleteDivisionApi,
-} from "../api/division.api.js";
+import { deleteDivisionApi } from "../api/division.api.js";
 
-
+const getStatusClassName = (status) =>
+  status === "active"
+    ? "school-badge-success"
+    : "school-badge-danger";
 
 const DivisionTable = ({
   divisions,
@@ -10,199 +11,168 @@ const DivisionTable = ({
   setEditingDivision,
   openModal,
 }) => {
+  const handleDelete = async (
+    divisionId
+  ) => {
+    const confirmDelete =
+      window.confirm(
+        "Delete this division?"
+      );
 
+    if (!confirmDelete) {
+      return;
+    }
 
+    try {
+      await deleteDivisionApi(
+        divisionId
+      );
 
+      fetchDivisions();
+    } catch (error) {
+      console.error(error);
 
-  /* =========================================
-     DELETE DIVISION
-  ========================================= */
+      alert(
+        error?.response?.data
+          ?.message ||
+          "Failed to delete division"
+      );
+    }
+  };
 
-  const handleDelete =
-    async (divisionId) => {
+  if (!divisions.length) {
+    return (
+      <div className="school-card p-8 text-center sm:p-10">
+        <div className="school-empty-state">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-900 text-lg font-bold text-white">
+            DV
+          </div>
 
-      const confirmDelete =
-        window.confirm(
-          "Delete this division?"
-        );
+          <h2 className="mt-5 text-2xl font-bold text-slate-900">
+            No divisions found
+          </h2>
 
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-500">
+            Add a division to assign capacity, connect teachers, and organize each class into real classroom groups.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
+ return (
+  <div className="section overflow-hidden">
 
-      if (!confirmDelete) {
-        return;
-      }
+    {/* Header */}
+    <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
 
+      <div>
 
+        <h2 className="text-xl font-semibold text-gray-800">
+          Divisions
+        </h2>
 
-      try {
+        <p className="text-sm text-gray-500">
+          Manage class divisions and teachers
+        </p>
 
-        await deleteDivisionApi(
-          divisionId
-        );
+      </div>
 
-        fetchDivisions();
+      <div className="rounded-md border bg-gray-50 px-4 py-2">
 
-      } catch (error) {
+        <p className="text-xs text-gray-500">
+          Total Divisions
+        </p>
 
-        console.error(error);
+        <p className="text-xl font-bold text-gray-800">
+          {divisions.length}
+        </p>
 
-        alert(
-          error?.response?.data
-            ?.message ||
-            "Failed to delete division"
-        );
-      }
-    };
+      </div>
 
+    </div>
 
+    {/* Empty */}
+    {!divisions.length ? (
 
+      <div className="p-10 text-center">
 
-  return (
-    <div className="overflow-x-auto rounded-lg bg-white shadow">
+        <h2 className="text-lg font-semibold text-gray-700">
+          No Divisions Found
+        </h2>
 
-      <table className="min-w-full">
+        <p className="mt-2 text-sm text-gray-500">
+          Add divisions to display here
+        </p>
 
-        <thead className="bg-gray-100">
+      </div>
 
-          <tr>
+    ) : (
 
-            <th className="px-4 py-3 text-left">
-              Division
-            </th>
+      <div className="table-container">
 
-            <th className="px-4 py-3 text-left">
-              Class
-            </th>
+        <table className="table">
 
-            <th className="px-4 py-3 text-left">
-              Teacher
-            </th>
-
-            <th className="px-4 py-3 text-left">
-              Capacity
-            </th>
-
-            <th className="px-4 py-3 text-left">
-              Status
-            </th>
-
-            <th className="px-4 py-3 text-left">
-              Actions
-            </th>
-
-          </tr>
-        </thead>
-
-
-
-
-        <tbody>
-
-          {divisions.length === 0 ? (
-
+          <thead>
             <tr>
-
-              <td
-                colSpan="6"
-                className="px-4 py-6 text-center text-gray-500"
-              >
-                No divisions found
-              </td>
-
+              <th>Division</th>
+              <th>Class</th>
+              <th>Teacher</th>
+              <th>Capacity</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
+          </thead>
 
-          ) : (
+          <tbody>
 
-            divisions.map((division) => (
+            {divisions.map((division) => (
 
-              <tr
-                key={division._id}
-                className="border-t"
-              >
+              <tr key={division._id}>
 
-                {/* DIVISION NAME */}
+                <td>{division.name}</td>
 
-                <td className="px-4 py-3">
-
-                  {division.name}
-
-                </td>
-
-
-
-                {/* CLASS */}
-
-                <td className="px-4 py-3">
-
+                <td>
                   {division.classId?.name || "-"}
-
                 </td>
 
-
-
-                {/* TEACHER */}
-
-                <td className="px-4 py-3">
-
-                  {division.assignedTeacher
-                    ?.name || "-"}
-
+                <td>
+                  {division.assignedTeacher?.name || "-"}
                 </td>
 
-
-
-                {/* CAPACITY */}
-
-                <td className="px-4 py-3">
-
+                <td>
                   {division.capacity}
-
                 </td>
 
-
-
-                {/* STATUS */}
-
-                <td className="px-4 py-3">
+                <td>
 
                   <span
-                    className={`rounded px-2 py-1 text-sm ${
-                      division.status ===
-                      "active"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
+                    className={
+                      division.status === "active"
+                        ? "badge-success"
+                        : "badge-danger"
+                    }
                   >
-
                     {division.status}
-
                   </span>
 
                 </td>
 
-
-
-                {/* ACTIONS */}
-
-                <td className="px-4 py-3">
+                <td>
 
                   <div className="flex gap-2">
 
                     <button
                       onClick={() => {
-
                         setEditingDivision(
                           division
                         );
-
                         openModal();
                       }}
-                      className="rounded bg-blue-500 px-3 py-1 text-white"
+                      className="btn-secondary"
                     >
                       Edit
                     </button>
-
-
 
                     <button
                       onClick={() =>
@@ -210,7 +180,7 @@ const DivisionTable = ({
                           division._id
                         )
                       }
-                      className="rounded bg-red-500 px-3 py-1 text-white"
+                      className="btn-danger"
                     >
                       Delete
                     </button>
@@ -220,14 +190,19 @@ const DivisionTable = ({
                 </td>
 
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
+
+            ))}
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    )}
+
+  </div>
+);
 };
-
-
 
 export default DivisionTable;

@@ -1,36 +1,35 @@
 import {
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
 import useStudents from "../hooks/useStudents";
 
-import AddStudentModal
-  from "../components/AddStudentModal";
+import AddStudentModal from "../components/AddStudentModal";
 
-import StudentsTable
-  from "../components/StudentTable.jsx";
+import StudentsTable from "../components/StudentTable";
 
-import BulkStudentUpload
-  from "../components/BulkStudentUpload.jsx";
+import BulkStudentUpload from "../components/BulkStudentUpload";
 
 import {
   getClassesApi,
   getDivisionsApi,
 } from "../api/student.api.js";
 
-
-
 const StudentsPage = () => {
-
+  // =========================================
+  // STUDENTS
+  // =========================================
   const {
     students,
     loading,
     fetchStudents,
   } = useStudents();
 
-
-
+  // =========================================
+  // STATES
+  // =========================================
   const [isModalOpen, setIsModalOpen] =
     useState(false);
 
@@ -43,357 +42,190 @@ const StudentsPage = () => {
   const [divisions, setDivisions] =
     useState([]);
 
+  const [pageError, setPageError] =
+    useState("");
 
-
-
-  /* =========================================
-     FETCH CLASSES
-  ========================================= */
-
-  const fetchClasses =
+  // =========================================
+  // FETCH INITIAL DATA
+  // =========================================
+  const fetchInitialData =
     async () => {
-
       try {
+        setPageError("");
 
-        const response =
-          await getClassesApi();
+        const [
+          classesResponse,
+          divisionsResponse,
+        ] = await Promise.all([
+          getClassesApi(),
+          getDivisionsApi(),
+        ]);
 
         setClasses(
-          response.data || []
+          classesResponse.data || []
         );
-
-      } catch (error) {
-
-        console.error(
-          "Fetch classes error:",
-          error
-        );
-      }
-    };
-
-
-
-  /* =========================================
-     FETCH DIVISIONS
-  ========================================= */
-
-  const fetchDivisions =
-    async () => {
-
-      try {
-
-        const response =
-          await getDivisionsApi();
 
         setDivisions(
-          response.data || []
+          divisionsResponse.data || []
         );
-
       } catch (error) {
+        console.error(error);
 
-        console.error(
-          "Fetch divisions error:",
-          error
+        setPageError(
+          "Failed to load data."
         );
       }
     };
 
-
-
-  /* =========================================
-     INITIAL FETCH
-  ========================================= */
-
+  // =========================================
+  // INITIAL FETCH
+  // =========================================
   useEffect(() => {
-
-    fetchClasses();
-
-    fetchDivisions();
-
+    fetchInitialData();
   }, []);
 
-
-
-
-  /* =========================================
-     MODAL
-  ========================================= */
-
+  // =========================================
+  // CLOSE MODAL
+  // =========================================
   const handleCloseModal = () => {
-
     setIsModalOpen(false);
 
     setEditingStudent(null);
   };
 
+  // =========================================
+  // STATS
+  // =========================================
+  const stats = useMemo(() => {
+    return students.reduce(
+      (acc, student) => {
+        acc.total += 1;
 
+        if (
+          student.status !==
+          "inactive"
+        ) {
+          acc.active += 1;
+        }
 
-
-  /* =========================================
-     STATS
-  ========================================= */
-
-  const totalStudents =
-    students.length;
-
-  const activeStudents =
-    students.filter(
-      (student) =>
-        student.status !== "inactive"
-    ).length;
-
-  const photoProfiles =
-    students.filter((student) =>
-      Boolean(student.photo)
-    ).length;
-
-  const supportProfiles =
-    students.filter(
-      (student) =>
-        student.economicCategory ===
-        "BPL"
-    ).length;
-
-
-
+        return acc;
+      },
+      {
+        total: 0,
+        active: 0,
+      }
+    );
+  }, [students]);
 
   return (
-    <div className="space-y-8">
-
+    <div className="space-y-6">
       {/* =====================================
-         HERO SECTION
+          HEADER
       ===================================== */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">
+            Students
+          </h1>
 
-      <section className="relative overflow-hidden rounded-[32px] bg-[linear-gradient(135deg,#0f172a_0%,#1d4ed8_55%,#38bdf8_100%)] px-6 py-8 text-white shadow-2xl sm:px-8">
-
-        <div className="absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_48%)]" />
-
-        <div className="absolute -left-10 top-8 h-28 w-28 rounded-full bg-sky-300/20 blur-3xl" />
-
-
-
-        <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-
-          <div className="max-w-2xl">
-
-            <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-sky-50">
-              LP School Student Registry
-            </span>
-
-
-
-            <h1 className="mt-5 text-3xl font-bold leading-tight text-white sm:text-4xl">
-              A kinder, cleaner student management desk for daily school work.
-            </h1>
-
-
-
-            <p className="mt-4 max-w-xl text-sm leading-7 text-sky-50/90 sm:text-base">
-              Review admissions, organize classroom placement, and keep student records polished for principals and teachers without changing your current workflow.
-            </p>
-
-          </div>
-
-
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-
-            <div className="rounded-[24px] border border-white/15 bg-white/10 px-5 py-4 backdrop-blur">
-
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-100">
-                Student Profiles
-              </p>
-
-
-
-              <p className="mt-2 text-3xl font-bold text-white">
-                {totalStudents}
-              </p>
-
-            </div>
-
-
-
-            <button
-              onClick={() =>
-                setIsModalOpen(true)
-              }
-              className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg transition duration-200 hover:-translate-y-0.5 hover:bg-slate-100"
-            >
-              Add Student
-            </button>
-
-          </div>
-
+          <p className="text-sm text-slate-500">
+            Manage student records
+          </p>
         </div>
 
-      </section>
-
-
+        <button
+          onClick={() =>
+            setIsModalOpen(true)
+          }
+          className="rounded-lg bg-slate-900 px-5 py-2 text-sm font-medium text-white hover:bg-slate-800"
+        >
+          Add Student
+        </button>
+      </div>
 
       {/* =====================================
-         STATS
+          ERROR
       ===================================== */}
+      {pageError && (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {pageError}
+        </div>
+      )}
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-
-        <div className="school-card p-5">
-
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400">
+      {/* =====================================
+          STATS
+      ===================================== */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="rounded-lg border bg-white p-5">
+          <p className="text-sm text-slate-500">
             Total Students
           </p>
 
-
-
-          <p className="mt-4 text-3xl font-bold text-slate-900">
-            {totalStudents}
-          </p>
-
-
-
-          <p className="mt-2 text-sm text-slate-500">
-            Complete student profiles currently visible in the register.
-          </p>
-
+          <h2 className="mt-2 text-3xl font-bold text-slate-800">
+            {stats.total}
+          </h2>
         </div>
 
-
-
-        <div className="school-card p-5">
-
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400">
-            Active Records
+        <div className="rounded-lg border bg-white p-5">
+          <p className="text-sm text-slate-500">
+            Active Students
           </p>
 
-
-
-          <p className="mt-4 text-3xl font-bold text-slate-900">
-            {activeStudents}
-          </p>
-
-
-
-          <p className="mt-2 text-sm text-slate-500">
-            Students ready for everyday attendance and class tracking.
-          </p>
-
+          <h2 className="mt-2 text-3xl font-bold text-slate-800">
+            {stats.active}
+          </h2>
         </div>
-
-
-
-        <div className="school-card p-5">
-
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400">
-            Photo Profiles
-          </p>
-
-
-
-          <p className="mt-4 text-3xl font-bold text-slate-900">
-            {photoProfiles}
-          </p>
-
-
-
-          <p className="mt-2 text-sm text-slate-500">
-            Records with a visual profile for faster teacher recognition.
-          </p>
-
-        </div>
-
-
-
-        <div className="school-card p-5">
-
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400">
-            Support Category
-          </p>
-
-
-
-          <p className="mt-4 text-3xl font-bold text-slate-900">
-            {supportProfiles}
-          </p>
-
-
-
-          <p className="mt-2 text-sm text-slate-500">
-            Learners marked under BPL support for school follow-up.
-          </p>
-
-        </div>
-
-      </section>
-
-
+      </div>
 
       {/* =====================================
-         BULK STUDENT UPLOAD
+          BULK UPLOAD
       ===================================== */}
-
       <BulkStudentUpload
         classes={classes}
         divisions={divisions}
         fetchStudents={fetchStudents}
       />
 
-
-
       {/* =====================================
-         STUDENTS TABLE
+          TABLE
       ===================================== */}
-
       {loading ? (
-
-        <div className="school-card p-6 sm:p-8">
-
-          <div className="animate-pulse space-y-4">
-
-            <div className="h-8 w-56 rounded-full bg-slate-200" />
-
-            <div className="h-20 rounded-[28px] bg-slate-100" />
-
-            <div className="h-20 rounded-[28px] bg-slate-100" />
-
-            <div className="h-20 rounded-[28px] bg-slate-100" />
-
-          </div>
-
+        <div className="rounded-lg border bg-white p-6">
+          <p className="text-sm text-slate-500">
+            Loading students...
+          </p>
         </div>
-
       ) : (
-
         <StudentsTable
           students={students}
           fetchStudents={fetchStudents}
-          setEditingStudent={setEditingStudent}
+          setEditingStudent={
+            setEditingStudent
+          }
           openModal={() =>
             setIsModalOpen(true)
           }
         />
-
       )}
 
-
-
       {/* =====================================
-         ADD / EDIT MODAL
+          MODAL
       ===================================== */}
-
       <AddStudentModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        editingStudent={editingStudent}
-        fetchStudents={fetchStudents}
+        editingStudent={
+          editingStudent
+        }
+        fetchStudents={
+          fetchStudents
+        }
         clearEdit={() =>
           setEditingStudent(null)
         }
       />
-
     </div>
   );
 };
-
-
 
 export default StudentsPage;

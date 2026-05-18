@@ -5,24 +5,17 @@ import {
 
 import {
   createDivisionApi,
-  updateDivisionApi,
   getClassesApi,
   getTeachersApi,
+  updateDivisionApi,
 } from "../api/division.api.js";
-
-
 
 const initialState = {
   name: "",
-
   classId: "",
-
   assignedTeacher: "",
-
   capacity: 40,
 };
-
-
 
 const DivisionForm = ({
   editingDivision,
@@ -30,318 +23,168 @@ const DivisionForm = ({
   clearEdit,
   onClose,
 }) => {
-
   const [formData, setFormData] =
     useState(initialState);
-
   const [classes, setClasses] =
     useState([]);
-
   const [teachers, setTeachers] =
     useState([]);
-
   const [loading, setLoading] =
     useState(false);
 
+  const fetchClasses = async () => {
+    try {
+      const response =
+        await getClassesApi();
 
+      setClasses(response.data || []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
+  const fetchTeachers = async () => {
+    try {
+      const response =
+        await getTeachersApi();
 
-  /* =========================================
-     FETCH CLASSES
-  ========================================= */
-
-  const fetchClasses =
-    async () => {
-
-      try {
-
-        const response =
-          await getClassesApi();
-
-        setClasses(
-          response.data || []
-        );
-
-      } catch (error) {
-
-        console.error(error);
-      }
-    };
-
-
-
-
-  /* =========================================
-     FETCH TEACHERS
-  ========================================= */
-
-  const fetchTeachers =
-    async () => {
-
-      try {
-
-        const response =
-          await getTeachersApi();
-
-        setTeachers(
-          response.data || []
-        );
-
-      } catch (error) {
-
-        console.error(error);
-      }
-    };
-
-
-
+      setTeachers(response.data || []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
-
     fetchClasses();
-
     fetchTeachers();
-
   }, []);
 
-
-
-
-  /* =========================================
-     EDIT MODE
-  ========================================= */
-
   useEffect(() => {
-
     if (editingDivision) {
-
       setFormData({
         name:
           editingDivision.name || "",
-
         classId:
-          editingDivision.classId?._id || "",
-
+          editingDivision.classId?._id ||
+          "",
         assignedTeacher:
           editingDivision
             .assignedTeacher?._id || "",
-
         capacity:
           editingDivision.capacity || 40,
       });
-
     } else {
-
       setFormData(initialState);
     }
-
   }, [editingDivision]);
 
-
-
-
-  /* =========================================
-     HANDLE CHANGE
-  ========================================= */
-
-  const handleChange = (e) => {
-
+  const handleChange = (event) => {
     setFormData((prev) => ({
       ...prev,
-
-      [e.target.name]:
-        e.target.value,
+      [event.target.name]:
+        event.target.value,
     }));
   };
 
+  const handleSubmit = async (
+    event
+  ) => {
+    event.preventDefault();
 
+    try {
+      setLoading(true);
 
-
-  /* =========================================
-     SUBMIT
-  ========================================= */
-
-  const handleSubmit =
-    async (e) => {
-
-      e.preventDefault();
-
-      try {
-
-        setLoading(true);
-
-        if (editingDivision) {
-
-          await updateDivisionApi(
-            editingDivision._id,
-            formData
-          );
-
-        } else {
-
-          await createDivisionApi(
-            formData
-          );
-        }
-
-        setFormData(initialState);
-
-        fetchDivisions();
-
-        if (onClose) {
-          onClose();
-        } else {
-          clearEdit();
-        }
-
-      } catch (error) {
-
-        console.error(error);
-
-        alert(
-          error?.response?.data
-            ?.message ||
-            "Something went wrong"
+      if (editingDivision) {
+        await updateDivisionApi(
+          editingDivision._id,
+          formData
         );
-
-      } finally {
-
-        setLoading(false);
+      } else {
+        await createDivisionApi(
+          formData
+        );
       }
-    };
 
+      setFormData(initialState);
+      fetchDivisions();
 
+      if (onClose) {
+        onClose();
+      } else {
+        clearEdit();
+      }
+    } catch (error) {
+      console.error(error);
 
+      alert(
+        error?.response?.data
+          ?.message ||
+          "Something went wrong"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-4"
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    onClick={onClose}
+  >
+
+    {/* Modal */}
+    <div
+      className="w-full max-w-3xl rounded-lg bg-white shadow-lg"
+      onClick={(event) =>
+        event.stopPropagation()
+      }
     >
 
-      {/* DIVISION NAME */}
+      {/* Header */}
+      <div className="flex items-center justify-between border-b p-5">
 
-      <input
-        type="text"
-        name="name"
-        placeholder="Division Name (A/B/C)"
-        value={formData.name}
-        onChange={handleChange}
-        className="w-full rounded border p-3"
-        required
-      />
+        <div>
 
+          <h2 className="text-xl font-semibold text-gray-800">
 
+            {editingDivision
+              ? "Edit Division"
+              : "Add Division"}
 
-      {/* CLASS */}
+          </h2>
 
-      <select
-        name="classId"
-        value={formData.classId}
-        onChange={handleChange}
-        className="w-full rounded border p-3"
-        required
-      >
+          <p className="mt-1 text-sm text-gray-500">
+            Manage division details and class assignment
+          </p>
 
-        <option value="">
-          Select Class
-        </option>
+        </div>
 
-        {classes.map((item) => (
-
-          <option
-            key={item._id}
-            value={item._id}
-          >
-
-            {item.name}
-
-          </option>
-        ))}
-      </select>
-
-
-
-      {/* ASSIGNED TEACHER */}
-
-      <select
-        name="assignedTeacher"
-        value={
-          formData.assignedTeacher
-        }
-        onChange={handleChange}
-        className="w-full rounded border p-3"
-      >
-
-        <option value="">
-          Select Teacher
-        </option>
-
-        {teachers.map((teacher) => (
-
-          <option
-            key={teacher._id}
-            value={teacher._id}
-          >
-
-            {teacher.name}
-
-          </option>
-        ))}
-      </select>
-
-
-
-      {/* CAPACITY */}
-
-      <input
-        type="number"
-        name="capacity"
-        placeholder="Capacity"
-        value={formData.capacity}
-        onChange={handleChange}
-        className="w-full rounded border p-3"
-      />
-
-
-
-      {/* BUTTONS */}
-
-      <div className="flex gap-3">
-
+        {/* Close */}
         <button
-          type="submit"
-          disabled={loading}
-          className="rounded bg-black px-4 py-2 text-white"
+          onClick={onClose}
+          className="flex h-9 w-9 items-center justify-center rounded-md border text-sm text-gray-600 hover:bg-gray-100"
         >
-
-          {loading
-            ? "Saving..."
-            : editingDivision
-            ? "Update"
-            : "Create"}
-
+          ✕
         </button>
 
-
-
-        {editingDivision && (
-
-          <button
-            type="button"
-            onClick={
-              onClose || clearEdit
-            }
-            className="rounded border px-4 py-2"
-          >
-            Cancel
-          </button>
-        )}
       </div>
-    </form>
-  );
+
+      {/* Form */}
+      <div className="p-5">
+
+        <DivisionForm
+          editingDivision={editingDivision}
+          fetchDivisions={fetchDivisions}
+          clearEdit={clearEdit}
+          onClose={onClose}
+        />
+
+      </div>
+
+    </div>
+
+  </div>
+);
 };
-
-
 
 export default DivisionForm;
