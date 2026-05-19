@@ -1,154 +1,168 @@
-import {
-  useMemo,
-} from "react";
-
+import React, { useMemo } from "react";
+import { Card, Row, Col, Space, Button, Alert } from "antd";
+import { UserOutlined, CheckCircleOutlined, StopOutlined } from "@ant-design/icons";
 import AddTeacherModal from "../components/AddTeacherModal";
-
 import TeacherTable from "../components/TeacherTable";
-
 import useTeachers from "../hooks/useTeachers";
 
 function TeachersPage() {
-  // =========================================
-  // DATA
-  // =========================================
-  const {
-    teachers,
-    loading,
-    error,
-    fetchTeachers,
-  } = useTeachers();
+  const { teachers, loading, error, fetchTeachers } = useTeachers();
 
   // =========================================
-  // STATS
+  // STATS CALCULATIONS
   // =========================================
   const stats = useMemo(() => {
     return teachers.reduce(
       (acc, teacher) => {
         acc.total += 1;
-
-        if (
-          teacher.status ===
-          "active"
-        ) {
+        if (teacher.status === "active") {
           acc.active += 1;
         }
-
-        if (
-          teacher.status ===
-          "suspended"
-        ) {
+        if (teacher.status === "suspended") {
           acc.suspended += 1;
         }
-
         return acc;
       },
-      {
-        total: 0,
-        active: 0,
-        suspended: 0,
-      }
+      { total: 0, active: 0, suspended: 0 }
     );
   }, [teachers]);
 
-  // =========================================
-  // ERROR
-  // =========================================
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
-        Failed to load teachers.
-      </div>
+      <Alert
+        message="Load Error"
+        description="Failed to load teacher records. Please check backend connection state."
+        type="error"
+        showIcon
+        style={{ borderRadius: 8 }}
+      />
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* =====================================
-          HEADER
-      ===================================== */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div style={{ padding: "8px 0" }}>
+      {/* HEADER SECTION */}
+      <div
+        style={{
+          background: "#ffffff",
+          padding: "24px",
+          borderRadius: 12,
+          border: "1px solid #f0f0f0",
+          marginBottom: 24,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 16,
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.02)"
+        }}
+      >
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">
-            Teachers
-          </h1>
-
-          <p className="text-sm text-slate-500">
-            Manage teacher accounts
-            and faculty records
+          <h1 style={{ fontSize: 24, fontWeight: "bold", color: "#1f1f1f", margin: 0 }}>Faculty Management</h1>
+          <p style={{ color: "#8c8c8c", margin: "4px 0 0 0" }}>
+            Add teachers, manage accounts, and assign access permissions.
           </p>
         </div>
-
-        <AddTeacherModal
-          refreshTeachers={
-            fetchTeachers
-          }
-        />
+        <AddTeacherModal refreshTeachers={fetchTeachers} />
       </div>
 
-      {/* =====================================
-          STATS
-      ===================================== */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border bg-white p-5">
-          <p className="text-sm text-slate-500">
-            Total Teachers
-          </p>
+      {/* STATS OVERVIEW */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={8}>
+          <Card bordered={false} style={{ borderRadius: 10, boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}>
+            <Space size="large">
+              <div
+                style={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: 8,
+                  background: "#e6f7ff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#1890ff",
+                  fontSize: 22
+                }}
+              >
+                <UserOutlined />
+              </div>
+              <div>
+                <div style={{ color: "#8c8c8c", fontSize: 13, textTransform: "uppercase", fontWeight: 600 }}>Total Roster</div>
+                <div style={{ fontSize: 26, fontWeight: "bold", color: "#262626", marginTop: 2 }}>
+                  {loading ? "..." : stats.total}
+                </div>
+              </div>
+            </Space>
+          </Card>
+        </Col>
 
-          <h2 className="mt-2 text-3xl font-bold text-slate-800">
-            {stats.total}
-          </h2>
-        </div>
+        <Col xs={24} sm={8}>
+          <Card bordered={false} style={{ borderRadius: 10, boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}>
+            <Space size="large">
+              <div
+                style={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: 8,
+                  background: "#f6ffed",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#52c41a",
+                  fontSize: 22
+                }}
+              >
+                <CheckCircleOutlined />
+              </div>
+              <div>
+                <div style={{ color: "#8c8c8c", fontSize: 13, textTransform: "uppercase", fontWeight: 600 }}>Active Accounts</div>
+                <div style={{ fontSize: 26, fontWeight: "bold", color: "#262626", marginTop: 2 }}>
+                  {loading ? "..." : stats.active}
+                </div>
+              </div>
+            </Space>
+          </Card>
+        </Col>
 
-        <div className="rounded-lg border bg-white p-5">
-          <p className="text-sm text-slate-500">
-            Active Accounts
-          </p>
+        <Col xs={24} sm={8}>
+          <Card bordered={false} style={{ borderRadius: 10, boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}>
+            <Space size="large">
+              <div
+                style={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: 8,
+                  background: "#fff2e8",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#fa8c16",
+                  fontSize: 22
+                }}
+              >
+                <StopOutlined />
+              </div>
+              <div>
+                <div style={{ color: "#8c8c8c", fontSize: 13, textTransform: "uppercase", fontWeight: 600 }}>Suspended</div>
+                <div style={{ fontSize: 26, fontWeight: "bold", color: "#262626", marginTop: 2 }}>
+                  {loading ? "..." : stats.suspended}
+                </div>
+              </div>
+            </Space>
+          </Card>
+        </Col>
+      </Row>
 
-          <h2 className="mt-2 text-3xl font-bold text-slate-800">
-            {stats.active}
-          </h2>
-        </div>
-
-        <div className="rounded-lg border bg-white p-5">
-          <p className="text-sm text-slate-500">
-            Suspended Accounts
-          </p>
-
-          <h2 className="mt-2 text-3xl font-bold text-slate-800">
-            {stats.suspended}
-          </h2>
-        </div>
-      </div>
-
-      {/* =====================================
-          TABLE
-      ===================================== */}
+      {/* TABLE SECTION */}
       {loading ? (
-        <div className="rounded-lg border bg-white p-6">
-          <p className="text-sm text-slate-500">
-            Loading teachers...
-          </p>
-        </div>
-      ) : teachers.length ===
-        0 ? (
-        <div className="rounded-lg border bg-white p-10 text-center">
-          <h2 className="text-lg font-semibold text-slate-800">
-            No Teachers Found
-          </h2>
-
-          <p className="mt-2 text-sm text-slate-500">
-            Add teachers to
-            display them here.
-          </p>
-        </div>
+        <Card style={{ borderRadius: 10, border: "1px solid #f0f0f0" }}>
+          <div style={{ textAlign: "center", padding: "40px 0" }}>
+            <div style={{ display: "inline-block", width: 32, height: 32, borderRadius: "50%", border: "3px solid #1890ff", borderTopColor: "transparent", animation: "spin 1s linear infinite" }} />
+            <p style={{ color: "#8c8c8c", marginTop: 12 }}>Retrieving faculty roster...</p>
+          </div>
+        </Card>
       ) : (
-        <TeacherTable
-          teachers={teachers}
-          refreshTeachers={
-            fetchTeachers
-          }
-        />
+        <TeacherTable teachers={teachers} refreshTeachers={fetchTeachers} />
       )}
     </div>
   );

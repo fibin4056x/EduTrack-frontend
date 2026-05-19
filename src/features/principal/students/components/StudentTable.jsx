@@ -1,20 +1,11 @@
-import { useMemo, useState } from "react";
-
-import { deleteStudentApi } from "../api/student.api.js";
+import React, { useMemo, useState, useEffect } from "react";
+import { Table, Input, Select, Button, Popconfirm, Tag, Avatar, Space, Tooltip, message, Card } from "antd";
+import { EditOutlined, DeleteOutlined, PlusOutlined, UploadOutlined, SearchOutlined, FilterOutlined } from "@ant-design/icons";
+import { deleteStudentApi, getClassesApi, getDivisionsApi } from "../api/student.api.js";
 
 const getInitials = (name) => {
-  if (!name) {
-    return "ST";
-  }
-
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) =>
-      part[0].toUpperCase()
-    )
-    .join("");
+  if (!name) return "ST";
+  return name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join("");
 };
 
 const StudentTable = ({
@@ -22,379 +13,234 @@ const StudentTable = ({
   fetchStudents,
   setEditingStudent,
   openModal,
+  openBulkUploadModal
 }) => {
-  // =========================================
-  // STATES
-  // =========================================
-  const [search, setSearch] =
-    useState("");
+  const [search, setSearch] = useState("");
+  const [classFilter, setClassFilter] = useState("all");
+  const [divisionFilter, setDivisionFilter] = useState("all");
+  const [classes, setClasses] = useState([]);
+  const [divisions, setDivisions] = useState([]);
 
-  const [statusFilter, setStatusFilter] =
-    useState("all");
+  useEffect(() => {
+    const fetchFilters = async () => {
+      try {
+        const [clsRes, divRes] = await Promise.all([getClassesApi(), getDivisionsApi()]);
+        setClasses(clsRes.data || []);
+        setDivisions(divRes.data || []);
+      } catch (err) {
+        console.error("Failed to fetch filter lists:", err);
+      }
+    };
+    fetchFilters();
+  }, []);
 
-  const [genderFilter, setGenderFilter] =
-    useState("all");
-
-  // =========================================
-  // DELETE STUDENT
-  // =========================================
-  const handleDelete = async (
-    studentId
-  ) => {
-    const confirmDelete =
-      window.confirm(
-        "Delete this student?"
-      );
-
-    if (!confirmDelete) {
-      return;
-    }
-
+  const handleDelete = async (studentId) => {
     try {
       await deleteStudentApi(studentId);
-
+      message.success("Student deleted successfully!");
       fetchStudents();
     } catch (error) {
       console.error(error);
-
-      alert(
-        error?.response?.data
-          ?.message ||
-          "Failed to delete student"
-      );
+      message.error(error?.response?.data?.message || "Failed to delete student");
     }
   };
 
-  // =========================================
-  // FILTERED STUDENTS
-  // =========================================
-  const filteredStudents =
-    useMemo(() => {
-      return students.filter(
-        (student) => {
-          const searchValue =
-            search.toLowerCase();
+  // Filter students based on search keyword, class, and division
+  const filteredStudents = useMemo(() => {
+    return students.filter((student) => {
+      const searchValue = search.toLowerCase();
+      const matchesSearch =
+        student.nameEnglish?.toLowerCase().includes(searchValue) ||
+        student.nameArabic?.toLowerCase().includes(searchValue) ||
+        student.examRegisterNumber?.toLowerCase().includes(searchValue);
 
-          const matchesSearch =
-            student.nameEnglish
-              ?.toLowerCase()
-              .includes(searchValue) ||
-            student.nameArabic
-              ?.toLowerCase()
-              .includes(searchValue) ||
-            student.classId?.name
-              ?.toLowerCase()
-              .includes(searchValue) ||
-            student.divisionId?.name
-              ?.toLowerCase()
-              .includes(searchValue);
+      const studentClassId = student.classId?._id || student.classId;
+      const matchesClass = classFilter === "all" ? true : studentClassId === classFilter;
 
-          const matchesStatus =
-            statusFilter === "all"
-              ? true
-              : student.status ===
-                statusFilter;
+      const studentDivId = student.divisionId?._id || student.divisionId;
+      const matchesDivision = divisionFilter === "all" ? true : studentDivId === divisionFilter;
 
-          const matchesGender =
-            genderFilter === "all"
-              ? true
-              : student.gender ===
-                genderFilter;
+      return matchesSearch && matchesClass && matchesDivision;
+    });
+  }, [students, search, classFilter, divisionFilter]);
 
-          return (
-            matchesSearch &&
-            matchesStatus &&
-            matchesGender
-          );
-        }
-      );
-    }, [
-      students,
-      search,
-      statusFilter,
-      genderFilter,
-    ]);
-
-  // =========================================
-  // EMPTY STATE
-  // =========================================
-  if (!students.length) {
-    return (
-      <div className="school-card p-8 text-center sm:p-10">
-        <div className="school-empty-state">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-900 text-lg font-bold text-white">
-            ST
+  const columns = [
+    {
+      title: "Roll No",
+      key: "rollNo",
+      width: 90,
+      align: "center",
+      render: (_, __, index) => <span style={{ fontWeight: 600, color: "#595959" }}>{index + 1}</span>
+    },
+    {
+      title: "Student Name",
+      key: "name",
+      render: (_, record) => (
+        <Space size="middle">
+          <Avatar
+            src={record.photo}
+            size={40}
+            style={{ backgroundColor: "#1890ff", fontWeight: "bold" }}
+          >
+            {getInitials(record.nameEnglish)}
+          </Avatar>
+          <div>
+            <div style={{ fontWeight: 600, color: "#262626" }}>{record.nameEnglish}</div>
+            {record.nameArabic && (
+              <div style={{ fontSize: 12, color: "#8c8c8c", fontStyle: "italic" }}>
+                {record.nameArabic}
+              </div>
+            )}
           </div>
-
-          <h2 className="mt-5 text-2xl font-bold text-slate-900">
-            No students found
-          </h2>
-
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-500">
-            Add students one by one
-            or use bulk upload to
-            populate the register.
-          </p>
-        </div>
-      </div>
-    );
-  }
+        </Space>
+      )
+    },
+    {
+      title: "Class",
+      key: "class",
+      render: (_, record) => <span>{record.classId?.name || "-"}</span>
+    },
+    {
+      title: "Division",
+      key: "division",
+      render: (_, record) => (
+        <Tag color="purple" style={{ borderRadius: 4, fontWeight: 500 }}>
+          {record.divisionId?.name || "-"}
+        </Tag>
+      )
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => (
+        <Tag color={status === "active" ? "green" : "red"} style={{ borderRadius: 4, fontWeight: 600 }}>
+          {status?.toUpperCase() || "ACTIVE"}
+        </Tag>
+      )
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      width: 140,
+      render: (_, record) => (
+        <Space size="middle">
+          <Tooltip title="Edit Student">
+            <Button
+              type="text"
+              icon={<EditOutlined style={{ color: "#1890ff" }} />}
+              onClick={() => {
+                setEditingStudent(record);
+                openModal();
+              }}
+            />
+          </Tooltip>
+          <Tooltip title="Delete Student">
+            <Popconfirm
+              title="Delete Student"
+              description="Are you sure you want to delete this student record?"
+              onConfirm={() => handleDelete(record._id)}
+              okText="Delete"
+              cancelText="Cancel"
+              okButtonProps={{ danger: true }}
+            >
+              <Button
+                type="text"
+                danger
+                icon={<DeleteOutlined />}
+              />
+            </Popconfirm>
+          </Tooltip>
+        </Space>
+      )
+    }
+  ];
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-      {/* =====================================
-          HEADER
-      ===================================== */}
-      <div className="border-b border-slate-200 p-5">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900">
-              Student Register
-            </h2>
+    <Card
+      bordered={false}
+      style={{ borderRadius: 8, boxShadow: "0 1px 2px rgba(0, 0, 0, 0.03)" }}
+      bodyStyle={{ padding: 0 }}
+    >
+      {/* FILTER & TOP ACTION CONTROLS BAR */}
+      <div style={{
+        padding: "20px 24px",
+        borderBottom: "1px solid #f0f0f0",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        flexWrap: "wrap",
+        gap: 16
+      }}>
+        {/* Left Search + Dropdown Filters */}
+        <Space size="middle" wrap style={{ flex: 1, minWidth: 280 }}>
+          <Input
+            placeholder="Search student name..."
+            prefix={<SearchOutlined style={{ color: "#bfbfbf" }} />}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: 220, borderRadius: 6 }}
+            allowClear
+          />
+          <Select
+            placeholder="Filter by Class"
+            value={classFilter}
+            onChange={setClassFilter}
+            style={{ width: 150 }}
+          >
+            <Select.Option value="all">All Classes</Select.Option>
+            {classes.map(c => (
+              <Select.Option key={c._id} value={c._id}>{c.name}</Select.Option>
+            ))}
+          </Select>
+          <Select
+            placeholder="Filter by Division"
+            value={divisionFilter}
+            onChange={setDivisionFilter}
+            style={{ width: 150 }}
+          >
+            <Select.Option value="all">All Divisions</Select.Option>
+            {divisions.map(d => (
+              <Select.Option key={d._id} value={d._id}>{d.name}</Select.Option>
+            ))}
+          </Select>
+        </Space>
 
-            <p className="mt-1 text-sm text-slate-500">
-              Total Students :{" "}
-              {
-                filteredStudents.length
-              }
-            </p>
-          </div>
+        {/* Right Add Single + Bulk CSV buttons */}
+        <Space size="middle">
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              setEditingStudent(null);
+              openModal();
+            }}
+            style={{ borderRadius: 6 }}
+          >
+            + Add Single Student
+          </Button>
 
-          {/* =====================================
-              SEARCH + FILTERS
-          ===================================== */}
-          <div className="flex flex-col gap-3 sm:flex-row">
-            {/* SEARCH */}
-            <input
-              type="text"
-              placeholder="Search students..."
-              value={search}
-              onChange={(event) =>
-                setSearch(
-                  event.target.value
-                )
-              }
-              className="school-input min-w-[240px]"
-            />
-
-            {/* STATUS FILTER */}
-            <select
-              value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(
-                  event.target.value
-                )
-              }
-              className="school-select"
-            >
-              <option value="all">
-                All Status
-              </option>
-
-              <option value="active">
-                Active
-              </option>
-
-              <option value="inactive">
-                Inactive
-              </option>
-            </select>
-
-            {/* GENDER FILTER */}
-            <select
-              value={genderFilter}
-              onChange={(event) =>
-                setGenderFilter(
-                  event.target.value
-                )
-              }
-              className="school-select"
-            >
-              <option value="all">
-                All Gender
-              </option>
-
-              <option value="male">
-                Male
-              </option>
-
-              <option value="female">
-                Female
-              </option>
-
-              <option value="other">
-                Other
-              </option>
-            </select>
-          </div>
-        </div>
+          <Button
+            icon={<UploadOutlined />}
+            onClick={openBulkUploadModal}
+            style={{ borderRadius: 6 }}
+          >
+            📥 Bulk Import (CSV/Excel)
+          </Button>
+        </Space>
       </div>
 
-      {/* =====================================
-          EMPTY FILTER RESULT
-      ===================================== */}
-      {!filteredStudents.length ? (
-        <div className="p-10 text-center">
-          <h2 className="text-xl font-semibold text-slate-800">
-            No matching students
-          </h2>
-
-          <p className="mt-2 text-sm text-slate-500">
-            Try changing the search
-            or filter options.
-          </p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-sm">
-            {/* TABLE HEAD */}
-            <thead className="bg-slate-100">
-              <tr>
-                <th className="px-4 py-4 text-left font-semibold text-slate-700">
-                  Student
-                </th>
-
-                <th className="px-4 py-4 text-left font-semibold text-slate-700">
-                  Class
-                </th>
-
-                <th className="px-4 py-4 text-left font-semibold text-slate-700">
-                  Division
-                </th>
-
-                <th className="px-4 py-4 text-left font-semibold text-slate-700">
-                  Gender
-                </th>
-
-                <th className="px-4 py-4 text-left font-semibold text-slate-700">
-                  Status
-                </th>
-
-                <th className="px-4 py-4 text-left font-semibold text-slate-700">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-
-            {/* TABLE BODY */}
-            <tbody>
-              {filteredStudents.map(
-                (student) => (
-                  <tr
-                    key={student._id}
-                    className="border-t border-slate-100 transition hover:bg-slate-50"
-                  >
-                    {/* STUDENT */}
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-sm font-bold text-white">
-                          {student.photo ? (
-                            <img
-                              src={
-                                student.photo
-                              }
-                              alt={
-                                student.nameEnglish
-                              }
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            getInitials(
-                              student.nameEnglish
-                            )
-                          )}
-                        </div>
-
-                        <div>
-                          <p className="font-semibold text-slate-800">
-                            {
-                              student.nameEnglish
-                            }
-                          </p>
-
-                          {student.nameArabic && (
-                            <p className="text-xs text-slate-500">
-                              {
-                                student.nameArabic
-                              }
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* CLASS */}
-                    <td className="px-4 py-4 text-slate-700">
-                      {student.classId
-                        ?.name || "-"}
-                    </td>
-
-                    {/* DIVISION */}
-                    <td className="px-4 py-4 text-slate-700">
-                      {student.divisionId
-                        ?.name || "-"}
-                    </td>
-
-                    {/* GENDER */}
-                    <td className="px-4 py-4 capitalize text-slate-700">
-                      {student.gender ||
-                        "-"}
-                    </td>
-
-                    {/* STATUS */}
-                    <td className="px-4 py-4">
-                      <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                          student.status ===
-                          "active"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-rose-100 text-rose-700"
-                        }`}
-                      >
-                        {
-                          student.status
-                        }
-                      </span>
-                    </td>
-
-                    {/* ACTIONS */}
-                    <td className="px-4 py-4">
-                      <div className="flex gap-2">
-                        {/* EDIT */}
-                        <button
-                          onClick={() => {
-                            setEditingStudent(
-                              student
-                            );
-
-                            openModal();
-                          }}
-                          className="rounded-xl bg-blue-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-600"
-                        >
-                          Edit
-                        </button>
-
-                        {/* DELETE */}
-                        <button
-                          onClick={() =>
-                            handleDelete(
-                              student._id
-                            )
-                          }
-                          className="rounded-xl bg-rose-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-rose-600"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+      {/* STUDENT DATA TABLE */}
+      <div style={{ padding: "0 24px 24px 24px" }}>
+        <Table
+          columns={columns}
+          dataSource={filteredStudents}
+          rowKey="_id"
+          pagination={{ pageSize: 8, showTotal: (total) => `Total ${total} Students` }}
+          style={{ marginTop: 16 }}
+        />
+      </div>
+    </Card>
   );
 };
 

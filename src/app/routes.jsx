@@ -11,13 +11,13 @@ import TeacherDashboard from "../features/teacher/dashboard/pages/DashboardPage.
 import MyStudentsPage from "../features/teacher/students/pages/MyStudentsPage.jsx";
 
 import TeachersPage from "../features/principal/teachers/pages/TeachersPage.jsx";
-
+import TeacherAttendancePage from "../features/teacher/attendence/pages/TeacherAttendancePage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 
 import ClassesPage from "../features/principal/classes/pages/ClassesPage.jsx";
 import StudentsPage from "../features/principal/students/pages/StudentsPage.jsx";
-
 import DivisionsPage from "../features/principal/divisions/pages/DivisionsPage.jsx";
+import SettingsPage from "../features/principal/settings/pages/SettingsPage.jsx";
 
 function AppRoutes() {
   return (
@@ -69,6 +69,10 @@ function AppRoutes() {
           path="/principal/divisions"
           element={<DivisionsPage />}
         />
+        <Route
+          path="/principal/settings"
+          element={<SettingsPage />}
+        />
       </Route>
          
 
@@ -93,7 +97,10 @@ function AppRoutes() {
           path="/teacher/students"
           element={<MyStudentsPage />}
         />
-
+        <Route
+          path="/teacher/attendance"
+          element={<TeacherAttendancePage />}
+        />
       </Route>
 
       {/* =========================

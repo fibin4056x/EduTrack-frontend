@@ -1,76 +1,32 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-
-import {
-  useLocation,
-} from "react-router-dom";
-
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { Card, Table, Button, Tooltip, Avatar, Space, Tag, Typography, Row, Col, Input, Select, Empty, message } from "antd";
+import { UserOutlined, PlusOutlined, DeleteOutlined, EditOutlined, InfoCircleOutlined, TeamOutlined, SearchOutlined } from "@ant-design/icons";
 import useMyStudents from "../hooks/useMyStudents.js";
 
-const formatDate = (value) => {
-  if (!value) {
-    return "Not added";
-  }
+const { Title, Text } = Typography;
 
-  const date =
-    new Date(value);
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-    return "Not added";
-  }
-
-  return date.toLocaleDateString(
-    "en-IN",
-    {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }
-  );
+const getInitials = (name) => {
+  if (!name) return "ST";
+  return name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join("");
 };
 
-const getInitials = (
-  name
-) => {
-  if (!name) {
-    return "ST";
-  }
-
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(
-      (part) =>
-        part[0].toUpperCase()
-    )
-    .join("");
+const formatDate = (value) => {
+  if (!value) return "Not added";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Not added";
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };
 
 const MyStudentsPage = () => {
-  const location =
-    useLocation();
+  const location = useLocation();
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
-  // =========================================
-  // STATES
-  // =========================================
-  const [search, setSearch] =
-    useState("");
-
-  const [statusFilter, setStatusFilter] =
-    useState("all");
-
-  // =========================================
-  // HOOK
-  // =========================================
   const {
     divisions,
     selectedDivisionId,
@@ -80,379 +36,264 @@ const MyStudentsPage = () => {
     loadingStudents,
   } = useMyStudents();
 
-  // =========================================
-  // ROUTE DIVISION
-  // =========================================
-  const routeDivisionId =
-    location.state
-      ?.selectedDivisionId ||
-    "";
-
-  const hasAppliedRouteDivision =
-    useRef(false);
+  // Route division ID mapping if pre-navigated
+  const routeDivisionId = location.state?.selectedDivisionId || "";
+  const hasAppliedRouteDivision = useRef(false);
 
   useEffect(() => {
-    if (
-      hasAppliedRouteDivision.current ||
-      !routeDivisionId ||
-      divisions.length === 0
-    ) {
+    if (hasAppliedRouteDivision.current || !routeDivisionId || divisions.length === 0) {
       return;
     }
-
-    const exists =
-      divisions.some(
-        (division) =>
-          division._id ===
-          routeDivisionId
-      );
-
+    const exists = divisions.some((d) => d._id === routeDivisionId);
     if (exists) {
-      setSelectedDivisionId(
-        routeDivisionId
-      );
+      setSelectedDivisionId(routeDivisionId);
     }
+    hasAppliedRouteDivision.current = true;
+  }, [divisions, routeDivisionId, setSelectedDivisionId]);
 
-    hasAppliedRouteDivision.current =
-      true;
-  }, [
-    divisions,
-    routeDivisionId,
-    setSelectedDivisionId,
-  ]);
+  const selectedDivision = useMemo(() => {
+    return divisions.find((d) => d._id === selectedDivisionId) || null;
+  }, [divisions, selectedDivisionId]);
 
-  // =========================================
-  // SELECTED DIVISION
-  // =========================================
-  const selectedDivision =
-    divisions.find(
-      (division) =>
-        division._id ===
-        selectedDivisionId
-    ) || null;
+  const filteredStudents = useMemo(() => {
+    return students.filter((student) => {
+      const searchValue = search.toLowerCase();
+      const matchesSearch =
+        student.nameEnglish?.toLowerCase().includes(searchValue) ||
+        student.nameArabic?.toLowerCase().includes(searchValue);
+      const matchesStatus = statusFilter === "all" ? true : student.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [students, search, statusFilter]);
 
-  // =========================================
-  // FILTERED STUDENTS
-  // =========================================
-  const filteredStudents =
-    useMemo(() => {
-      return students.filter(
-        (student) => {
-          const searchValue =
-            search.toLowerCase();
+  const columns = [
+    {
+      title: "Roll No",
+      key: "rollNo",
+      width: 80,
+      align: "center",
+      render: (_, __, index) => <span style={{ fontWeight: 600, color: "#595959" }}>{index + 1}</span>
+    },
+    {
+      title: "Student Name",
+      key: "name",
+      render: (_, record) => (
+        <Space size="middle">
+          <Avatar
+            src={record.photo}
+            size={40}
+            style={{ backgroundColor: "#1890ff", fontWeight: "bold" }}
+          >
+            {getInitials(record.nameEnglish)}
+          </Avatar>
+          <div>
+            <div style={{ fontWeight: 600, color: "#262626" }}>{record.nameEnglish}</div>
+            {record.nameArabic && (
+              <div style={{ fontSize: 12, color: "#8c8c8c", fontStyle: "italic" }}>
+                {record.nameArabic}
+              </div>
+            )}
+          </div>
+        </Space>
+      )
+    },
+    {
+      title: "Gender",
+      dataIndex: "gender",
+      key: "gender",
+      render: (gender) => <span style={{ textTransform: "capitalize" }}>{gender || "-"}</span>
+    },
+    {
+      title: "Date of Birth",
+      dataIndex: "dateOfBirth",
+      key: "dob",
+      render: (dob) => <span>{formatDate(dob)}</span>
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => (
+        <Tag color={status === "active" ? "green" : "red"} style={{ borderRadius: 4, fontWeight: 600 }}>
+          {status?.toUpperCase() || "ACTIVE"}
+        </Tag>
+      )
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      width: 200,
+      render: (_, record) => (
+        <Space size="middle">
+          <Button
+            type="primary"
+            ghost
+            icon={<EditOutlined />}
+            size="small"
+            style={{ borderRadius: 4 }}
+            onClick={() => message.info(`Edit student details action for ${record.nameEnglish}`)}
+          >
+            Edit Details
+          </Button>
 
-          const matchesSearch =
-            student.nameEnglish
-              ?.toLowerCase()
-              .includes(searchValue) ||
-            student.nameArabic
-              ?.toLowerCase()
-              .includes(searchValue);
-
-          const matchesStatus =
-            statusFilter === "all"
-              ? true
-              : student.status ===
-                statusFilter;
-
-          return (
-            matchesSearch &&
-            matchesStatus
-          );
-        }
-      );
-    }, [
-      students,
-      search,
-      statusFilter,
-    ]);
+          {/* Delete Guardrail Tooltip */}
+          <Tooltip title="Admin Permission Required">
+            <Button
+              type="text"
+              danger
+              disabled
+              icon={<DeleteOutlined />}
+              size="small"
+            />
+          </Tooltip>
+        </Space>
+      )
+    }
+  ];
 
   return (
-    <div className="space-y-6">
-      {/* =====================================
-          HEADER
-      ===================================== */}
-      <section className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">
-            My Students
-          </h1>
+    <div style={{ padding: "8px 0" }}>
+      {/* HEADER */}
+      <div style={{
+        background: "#fff",
+        padding: "24px",
+        borderRadius: 8,
+        border: "1px solid #f0f0f0",
+        marginBottom: 24
+      }}>
+        <Title level={2} style={{ margin: 0, fontWeight: "bold" }}>My Classroom Students</Title>
+        <p style={{ color: "#8c8c8c", margin: "4px 0 0 0" }}>
+          Monitor division folders, examine profile files, and adjust student details inside your assigned LP classrooms.
+        </p>
+      </div>
 
-          <p className="mt-2 text-sm text-slate-500">
-            Manage students
-            assigned to your
-            classroom divisions.
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-            Total Students
-          </p>
-
-          <p className="mt-2 text-3xl font-bold text-slate-900">
-            {loadingStudents
-              ? "..."
-              : filteredStudents.length}
-          </p>
-        </div>
-      </section>
-
-      {/* =====================================
-          MAIN LAYOUT
-      ===================================== */}
-      <div className="grid gap-5 lg:grid-cols-[260px,1fr]">
-        {/* =====================================
-            DIVISION SIDEBAR
-        ===================================== */}
-        <aside className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-4">
-            <h2 className="text-lg font-bold text-slate-900">
-              Divisions
-            </h2>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Assigned classroom
-              groups.
-            </p>
-          </div>
-
-          <div className="space-y-2 p-4">
+      <Row gutter={[20, 20]}>
+        {/* LEFT DIVISION PICKER */}
+        <Col xs={24} md={6}>
+          <Card
+            title={
+              <Space>
+                <TeamOutlined style={{ color: "#1890ff" }} />
+                <span style={{ fontWeight: "bold" }}>Class Divisions</span>
+              </Space>
+            }
+            bordered={false}
+            style={{ borderRadius: 8, boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}
+            bodyStyle={{ padding: "12px 16px" }}
+          >
             {loadingDivisions ? (
-              <div className="space-y-3">
-                <div className="h-12 animate-pulse rounded-2xl bg-slate-100" />
-
-                <div className="h-12 animate-pulse rounded-2xl bg-slate-100" />
-              </div>
-            ) : divisions.length ===
-              0 ? (
-              <p className="text-sm text-slate-500">
-                No divisions assigned.
-              </p>
+              <div style={{ textAlign: "center", padding: "20px 0" }}>Loading classroom divisions...</div>
+            ) : divisions.length === 0 ? (
+              <Empty description="No divisions assigned." />
             ) : (
-              divisions.map(
-                (division) => {
-                  const isActive =
-                    division._id ===
-                    selectedDivisionId;
-
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {divisions.map((d) => {
+                  const isActive = d._id === selectedDivisionId;
                   return (
-                    <button
-                      key={
-                        division._id
-                      }
-                      type="button"
-                      onClick={() =>
-                        setSelectedDivisionId(
-                          division._id
-                        )
-                      }
-                      className={`w-full rounded-2xl px-4 py-3 text-left transition ${
-                        isActive
-                          ? "bg-slate-900 text-white shadow-lg"
-                          : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                      }`}
-                    >
-                      <p className="text-sm font-semibold">
-                        {
-                          division
-                            .classId
-                            ?.name
-                        }
-                      </p>
-
-                      <p className="mt-1 text-xs opacity-80">
-                        {
-                          division.name
-                        }
-                      </p>
-                    </button>
-                  );
-                }
-              )
-            )}
-          </div>
-        </aside>
-
-        {/* =====================================
-            STUDENTS SECTION
-        ===================================== */}
-        <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-          {/* TOP */}
-          <div className="border-b border-slate-200 p-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900">
-                  {selectedDivision
-                    ? `${selectedDivision.classId?.name} - ${selectedDivision.name}`
-                    : "Select Division"}
-                </h2>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Student records
-                  inside this division.
-                </p>
-              </div>
-
-              {/* SEARCH + FILTER */}
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <input
-                  type="text"
-                  placeholder="Search students..."
-                  value={search}
-                  onChange={(
-                    event
-                  ) =>
-                    setSearch(
-                      event.target
-                        .value
-                    )
-                  }
-                  className="school-input"
-                />
-
-                <select
-                  value={
-                    statusFilter
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setStatusFilter(
-                      event.target
-                        .value
-                    )
-                  }
-                  className="school-select sm:max-w-[180px]"
-                >
-                  <option value="all">
-                    All Status
-                  </option>
-
-                  <option value="active">
-                    Active
-                  </option>
-
-                  <option value="inactive">
-                    Inactive
-                  </option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* CONTENT */}
-          <div className="p-5">
-            {loadingStudents ? (
-              <div className="space-y-4">
-                <div className="h-24 animate-pulse rounded-3xl bg-slate-100" />
-
-                <div className="h-24 animate-pulse rounded-3xl bg-slate-100" />
-
-                <div className="h-24 animate-pulse rounded-3xl bg-slate-100" />
-              </div>
-            ) : !selectedDivision ? (
-              <div className="rounded-3xl border border-dashed border-slate-300 p-12 text-center">
-                <h3 className="text-lg font-semibold text-slate-800">
-                  Select a division
-                </h3>
-
-                <p className="mt-2 text-sm text-slate-500">
-                  Choose a division
-                  from the sidebar.
-                </p>
-              </div>
-            ) : !filteredStudents.length ? (
-              <div className="rounded-3xl border border-dashed border-slate-300 p-12 text-center">
-                <h3 className="text-lg font-semibold text-slate-800">
-                  No students found
-                </h3>
-
-                <p className="mt-2 text-sm text-slate-500">
-                  Try adjusting the
-                  filters or search.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredStudents.map(
-                  (student) => (
                     <div
-                      key={
-                        student._id
-                      }
-                      className="flex flex-col gap-5 rounded-3xl border border-slate-200 p-5 transition hover:shadow-md lg:flex-row lg:items-center lg:justify-between"
+                      key={d._id}
+                      onClick={() => setSelectedDivisionId(d._id)}
+                      style={{
+                        padding: "12px 16px",
+                        borderRadius: 6,
+                        cursor: "pointer",
+                        border: isActive ? "1px solid #91d5ff" : "1px solid #f0f0f0",
+                        background: isActive ? "#e6f7ff" : "#fafafa",
+                        transition: "all 0.2s"
+                      }}
                     >
-                      {/* LEFT */}
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-sm font-bold text-white">
-                          {student.photo ? (
-                            <img
-                              src={
-                                student.photo
-                              }
-                              alt={
-                                student.nameEnglish
-                              }
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            getInitials(
-                              student.nameEnglish
-                            )
-                          )}
-                        </div>
-
-                        <div>
-                          <h3 className="text-lg font-semibold text-slate-900">
-                            {
-                              student.nameEnglish
-                            }
-                          </h3>
-
-                          <p className="mt-1 text-sm text-slate-500">
-                            {student.gender ||
-                              "Not added"}
-
-                            {" • "}
-
-                            {formatDate(
-                              student.dateOfBirth
-                            )}
-                          </p>
-                        </div>
+                      <div style={{ fontWeight: "bold", color: isActive ? "#1890ff" : "#262626" }}>
+                        {d.classId?.name}
                       </div>
-
-                      {/* RIGHT */}
-                      <div className="flex flex-wrap items-center gap-3">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            student.status ===
-                            "active"
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-rose-100 text-rose-700"
-                          }`}
-                        >
-                          {
-                            student.status
-                          }
-                        </span>
-
-                        <button
-                          type="button"
-                          className="school-button-primary"
-                        >
-                          View
-                        </button>
+                      <div style={{ fontSize: 12, color: isActive ? "#096dd9" : "#8c8c8c", marginTop: 2 }}>
+                        Division: {d.name}
                       </div>
                     </div>
-                  )
-                )}
+                  );
+                })}
               </div>
             )}
-          </div>
-        </section>
-      </div>
+          </Card>
+        </Col>
+
+        {/* RIGHT STUDENTS REGISTER LIST */}
+        <Col xs={24} md={18}>
+          <Card
+            title={
+              <Space direction="vertical" size={2}>
+                <span style={{ fontWeight: "bold", fontSize: 16 }}>
+                  {selectedDivision
+                    ? `${selectedDivision.classId?.name} - ${selectedDivision.name} Roster`
+                    : "Select Assigned Division"}
+                </span>
+                <span style={{ fontSize: 12, color: "#8c8c8c", fontWeight: "normal" }}>
+                  Class records details
+                </span>
+              </Space>
+            }
+            extra={
+              /* Add Student Guardrail Tooltip */
+              <Tooltip title="Admin Permission Required">
+                <Button
+                  type="primary"
+                  disabled
+                  icon={<PlusOutlined />}
+                  style={{ borderRadius: 6 }}
+                >
+                  Add Student
+                </Button>
+              </Tooltip>
+            }
+            bordered={false}
+            style={{ borderRadius: 8, boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}
+          >
+            {/* SEARCH AND FILTERS */}
+            <div style={{
+              marginBottom: 20,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 12
+            }}>
+              <Input
+                placeholder="Search students..."
+                prefix={<SearchOutlined style={{ color: "#bfbfbf" }} />}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{ width: 220, borderRadius: 4 }}
+                allowClear
+              />
+              
+              <Select
+                value={statusFilter}
+                onChange={setStatusFilter}
+                style={{ width: 140 }}
+              >
+                <Select.Option value="all">All Status</Select.Option>
+                <Select.Option value="active">Active</Select.Option>
+                <Select.Option value="inactive">Inactive</Select.Option>
+              </Select>
+            </div>
+
+            {loadingStudents ? (
+              <div style={{ textAlign: "center", padding: "40px 0" }}>Loading student lists...</div>
+            ) : !selectedDivisionId ? (
+              <Empty description="Select a division from the left panel to load the student list." />
+            ) : filteredStudents.length === 0 ? (
+              <Empty description="No matching students found." />
+            ) : (
+              <Table
+                columns={columns}
+                dataSource={filteredStudents}
+                rowKey="_id"
+                pagination={{ pageSize: 8 }}
+                style={{ marginTop: 10 }}
+              />
+            )}
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 };
